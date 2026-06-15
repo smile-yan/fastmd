@@ -3,9 +3,11 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/carlos7ags/folio/document"
 	"github.com/carlos7ags/folio/html"
@@ -62,6 +64,15 @@ func SaveConfig(cfg AppConfig) error {
 type AppService struct {
 	app  *application.App
 	quit *quitCoordinator
+
+	// roots is the set of directories the user has explicitly granted the
+	// app access to. Lookups and inserts are guarded by rootsMu; rootsOnce
+	// lazily allocates the map so callers that never touch the filesystem
+	// (e.g. the quit coordinator tests) can keep using zero-value
+	// construction.
+	rootsOnce sync.Once
+	rootsMu   sync.RWMutex
+	roots     map[string]*os.Root
 }
 
 func (s *AppService) focusedWindow() application.Window {
@@ -76,7 +87,16 @@ func (s *AppService) OpenFileDialog() (string, error) {
 	if w := s.focusedWindow(); w != nil {
 		d = d.AttachToWindow(w)
 	}
-	return d.PromptForSingleSelection()
+	path, err := d.PromptForSingleSelection()
+	// The user explicitly chose this file, so its directory is now
+	// trusted for the rest of the session. trustDir is best-effort —
+	// a failure here is logged but doesn't block the dialog result.
+	if err == nil && path != "" {
+		if trustErr := s.trustDir(filepath.Dir(path)); trustErr != nil {
+			fmt.Fprintf(os.Stderr, "trustDir(%s) failed: %v\n", filepath.Dir(path), trustErr)
+		}
+	}
+	return path, err
 }
 
 func (s *AppService) SaveFileDialog(defaultPath string) (string, error) {
@@ -89,21 +109,42 @@ func (s *AppService) SaveFileDialog(defaultPath string) (string, error) {
 	} else {
 		d.SetFilename("untitled.md")
 	}
-	return d.PromptForSingleSelection()
+	path, err := d.PromptForSingleSelection()
+	// Trust the directory of any path the user chose to save into. A save
+	// dialog is the user's explicit opt-in to write into a location, so
+	// that's the moment the directory becomes part of the trust set.
+	if err == nil && path != "" {
+		if trustErr := s.trustDir(filepath.Dir(path)); trustErr != nil {
+			fmt.Fprintf(os.Stderr, "trustDir(%s) failed: %v\n", filepath.Dir(path), trustErr)
+		}
+	}
+	return path, err
 }
 
 func (s *AppService) OpenFolderDialog() (string, error) {
-	return s.app.Dialog.OpenFile().
+	path, err := s.app.Dialog.OpenFile().
 		AttachToWindow(s.focusedWindow()).
 		SetTitle("Open Folder").
 		CanChooseDirectories(true).
 		CanChooseFiles(false).
 		CanCreateDirectories(true).
 		PromptForSingleSelection()
+	// The user picked a folder to browse — the folder itself and every
+	// file inside it (and its subdirectories) is now trusted.
+	if err == nil && path != "" {
+		if trustErr := s.trustDir(path); trustErr != nil {
+			fmt.Fprintf(os.Stderr, "trustDir(%s) failed: %v\n", path, trustErr)
+		}
+	}
+	return path, err
 }
 
 func (s *AppService) ReadFile(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	root, rel, err := s.resolveTrusted(path)
+	if err != nil {
+		return "", err
+	}
+	data, err := root.ReadFile(rel)
 	if err != nil {
 		return "", err
 	}
@@ -112,11 +153,23 @@ func (s *AppService) ReadFile(path string) (string, error) {
 }
 
 func (s *AppService) WriteFile(path string, content string) error {
-	return os.WriteFile(path, []byte(content), 0644)
+	root, rel, err := s.resolveTrusted(path)
+	if err != nil {
+		return err
+	}
+	return root.WriteFile(rel, []byte(content), 0644)
 }
 
 func (s *AppService) ListDirectory(path string) ([]FileInfo, error) {
-	entries, err := os.ReadDir(path)
+	root, rel, err := s.resolveTrusted(path)
+	if err != nil {
+		return nil, err
+	}
+	// os.Root has no ReadDir method, but Root.FS() returns an fs.FS that
+	// is itself scoped to the root. fs.ReadDir on it goes through the
+	// same openat path that ReadFile uses, so symlink escapes are still
+	// caught at the kernel layer.
+	entries, err := fs.ReadDir(root.FS(), rel)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"log"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -62,6 +63,13 @@ func NewEditorWindowWithFile(app *application.App, filePath string) *application
 		for _, f := range files {
 			lower := strings.ToLower(f)
 			if strings.HasSuffix(lower, ".md") || strings.HasSuffix(lower, ".markdown") {
+				// The user dragged a real file from Finder onto the
+				// window — the directory it lives in is now trusted.
+				if Service != nil {
+					if err := Service.trustDir(filepath.Dir(f)); err != nil {
+						log.Printf("trustDir(%s) failed: %v", filepath.Dir(f), err)
+					}
+				}
 				window.EmitEvent("file:open", f)
 				break
 			}
@@ -191,7 +199,15 @@ func Run(assets fs.FS) error {
 	})
 
 	app.Event.OnApplicationEvent(events.Common.ApplicationOpenedWithFile, func(event *application.ApplicationEvent) {
-		RouteOpenedFile(event.Context().Filename(), app.Window.Current(), func(path string) {
+		path := event.Context().Filename()
+		// The user double-clicked a file in Finder (or used "Open With"
+		// from another app) — trust its directory so ReadFile accepts it.
+		if path != "" && Service != nil {
+			if err := Service.trustDir(filepath.Dir(path)); err != nil {
+				log.Printf("trustDir(%s) failed: %v", filepath.Dir(path), err)
+			}
+		}
+		RouteOpenedFile(path, app.Window.Current(), func(path string) {
 			NewEditorWindowWithFile(app, path)
 		})
 	})

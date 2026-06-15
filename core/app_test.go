@@ -16,7 +16,13 @@ func TestReadFile(t *testing.T) {
 	tmp.Close()
 	defer os.Remove(tmp.Name())
 
+	// ReadFile requires the file to be inside a trusted root; the temp
+	// file's parent directory is the smallest scope that satisfies the
+	// check.
 	svc := &AppService{}
+	if err := svc.trustDir(filepath.Dir(tmp.Name())); err != nil {
+		t.Fatalf("trustDir: %v", err)
+	}
 	content, err := svc.ReadFile(tmp.Name())
 	if err != nil {
 		t.Fatalf("ReadFile error: %v", err)
@@ -31,6 +37,9 @@ func TestWriteFile(t *testing.T) {
 	path := filepath.Join(dir, "test.md")
 
 	svc := &AppService{}
+	if err := svc.trustDir(dir); err != nil {
+		t.Fatalf("trustDir: %v", err)
+	}
 	if err := svc.WriteFile(path, "# Test"); err != nil {
 		t.Fatalf("WriteFile error: %v", err)
 	}
@@ -48,6 +57,9 @@ func TestListDirectory(t *testing.T) {
 	os.Mkdir(filepath.Join(dir, "subdir"), 0755)
 
 	svc := &AppService{}
+	if err := svc.trustDir(dir); err != nil {
+		t.Fatalf("trustDir: %v", err)
+	}
 	files, err := svc.ListDirectory(dir)
 	if err != nil {
 		t.Fatalf("ListDirectory error: %v", err)

@@ -15,6 +15,7 @@ extern void showCloseSheet(unsigned int did, void *winPtr,
 import "C"
 
 import (
+	"path/filepath"
 	"sync"
 	"unsafe"
 )
@@ -68,6 +69,15 @@ func (s *AppService) ShowCloseSheet(filename, lastDir string) string {
 	case 1:
 		return "discard"
 	case 2:
+		// The user picked a save destination through NSSavePanel — that
+		// destination is now a trusted directory. (On non-darwin, the
+		// ShowCloseSheet stub calls SaveFileDialog, which already
+		// registers trust.)
+		if r.path != "" {
+			if err := s.trustDir(filepath.Dir(r.path)); err != nil {
+				_ = err // best-effort; dialog still returns the path
+			}
+		}
 		return "save:" + r.path
 	default:
 		return "cancel"

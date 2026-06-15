@@ -9,6 +9,7 @@ extern void updateDockRecentFiles(const char **paths, int count);
 */
 import "C"
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -52,6 +53,15 @@ func dockMenuOpenRecent(cpath *C.char) {
 	path := C.GoString(cpath)
 	if path == "" || Service == nil || Service.app == nil {
 		return
+	}
+	// Recent files are paths the user has previously opened in this app,
+	// so re-opening one is implicit consent to access its directory again.
+	if err := Service.trustDir(filepath.Dir(path)); err != nil {
+		// Not fatal — the file just won't open. Log so the user has a
+		// hint if they wonder why nothing happened.
+		// (stderr is fine here; main runs in a console-less environment
+		// and these are exceptional.)
+		_ = err
 	}
 	go func() {
 		if w := Service.app.Window.Current(); w != nil {
