@@ -105,7 +105,7 @@ jobs:
           if-no-files-found: error
 
   package-macos:
-    name: Package macOS DMG
+    name: Package macOS app
     needs: build
     runs-on: macos-latest
 
@@ -176,43 +176,28 @@ jobs:
           </plist>
           PLIST
 
-      - name: Create DMG
+      - name: Create app zip
         shell: bash
         run: |
           set -euo pipefail
-          volume_dir="/tmp/${APP_NAME}-dmg"
-          rm -rf "${volume_dir}"
-          mkdir -p "${volume_dir}"
-          cp -R "/tmp/${APP_NAME}.app" "${volume_dir}/"
-          ln -s /Applications "${volume_dir}/Applications"
-          hdiutil create \
-            -volname "Fast MD" \
-            -srcfolder "${volume_dir}" \
-            -ov \
-            -format ULFO \
-            -fs HFS+ \
-            -scrub \
-            "dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal.dmg"
+          app_dir="/tmp/${APP_NAME}.app"
+          dist_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal"
+          mkdir -p "${dist_dir}"
+          (cd /tmp && zip -r -9 "${GITHUB_WORKSPACE}/${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal.app.zip" "${APP_NAME}.app")
 
-      - name: Verify DMG
+      - name: Verify app zip
         shell: bash
         run: |
           set -euo pipefail
-          dmg_path="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal.dmg"
-          hdiutil verify "${dmg_path}"
-          mount_dir="/tmp/${APP_NAME}-verify"
-          rm -rf "${mount_dir}"
-          mkdir -p "${mount_dir}"
-          hdiutil attach "${dmg_path}" -readonly -nobrowse -mountpoint "${mount_dir}"
-          test -d "${mount_dir}/${APP_NAME}.app"
-          hdiutil detach "${mount_dir}"
-          shasum -a 256 "${dmg_path}"
+          zip_path="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal.app.zip"
+          unzip -t "${zip_path}"
+          shasum -a 256 "${zip_path}"
 
       - name: Upload macOS package artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal
-          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal.dmg
+          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal.app.zip
           if-no-files-found: error
 
   release:
@@ -250,9 +235,9 @@ jobs:
           mkdir -p windows-amd64
           mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fast-md.exe windows-amd64/fast-md.exe
           (cd windows-amd64 && zip -9 fast-md-${{ github.ref_name }}-windows-amd64.zip fast-md.exe && rm fast-md.exe)
-          # macOS: DMG is already compressed
+          # macOS: app bundle is already compressed as .zip
           mkdir -p darwin-universal
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal/*.dmg darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.dmg
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal/*.zip darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.app.zip
           ls -la */
 
       - name: Create draft release
@@ -263,4 +248,4 @@ jobs:
           files: |
             release-assets/linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64.tar.gz
             release-assets/windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.zip
-            release-assets/darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.dmg
+            release-assets/darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.app.zip
