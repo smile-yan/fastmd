@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -170,13 +169,17 @@ func (s *AppService) RequestQuit() {
 	s.quit.Begin(queue)
 }
 
-func (s *AppService) ConfirmQuitWindow(ctx context.Context) {
+// ConfirmQuitWindow advances the quit coordinator for the given window. The
+// window ID is supplied by the frontend, which receives it in the
+// app:confirmQuitWindow event payload (see quitCoordinator.requestNextLocked).
+// Earlier versions read the window from ctx.Value(application.WindowKey), but
+// Wails 3 generic RPC calls do not populate that key, so the call silently
+// no-op'd and the app never quit.
+func (s *AppService) ConfirmQuitWindow(windowID uint) {
 	if s.quit == nil {
 		return
 	}
-	if w, ok := ctx.Value(application.WindowKey).(application.Window); ok && w != nil {
-		s.quit.Confirm(w.ID())
-	}
+	s.quit.Confirm(windowID)
 }
 
 func (s *AppService) CancelQuit() {

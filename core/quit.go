@@ -82,7 +82,13 @@ func (q *quitCoordinator) requestNextLocked() {
 		}
 		q.current = next
 		next.Focus()
-		next.EmitEvent(quitConfirmWindowEvent)
+		// Pass the window ID in the event payload so the frontend can echo it
+		// back to ConfirmQuitWindow. Previously the JS side called the binding
+		// with no arguments and relied on Go pulling the window out of
+		// ctx.Value(application.WindowKey) — that key is not populated for
+		// generic RPC calls, so the confirmation was silently dropped and the
+		// quit never advanced.
+		next.EmitEvent(quitConfirmWindowEvent, next.ID())
 		return
 	}
 

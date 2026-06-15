@@ -119,16 +119,32 @@ describe('App source mode', () => {
     expect(wrapper.find('.mock-editor').element.value).toBe('# Unsaved')
   })
 
-  it('confirms a coordinated quit window without directly quitting the app', async () => {
+  it('echoes the window ID from the confirm-quit event back to ConfirmQuitWindow', async () => {
     const bindings = await import('../bindings/changeme/core/appservice')
 
     const { default: App } = await import('./App.vue')
     mount(App)
 
-    await eventHandlers.get('app:confirmQuitWindow')?.()
+    // Go puts the originating window ID in the event payload. The frontend
+    // must capture it and pass it back so the quit coordinator advances.
+    await eventHandlers.get('app:confirmQuitWindow')?.({ data: 42 })
 
     expect(bindings.ConfirmQuitWindow).toHaveBeenCalledTimes(1)
+    expect(bindings.ConfirmQuitWindow).toHaveBeenCalledWith(42)
     expect(bindings.QuitApp).not.toHaveBeenCalled()
+  })
+
+  it('falls back to CancelQuit + CloseWindow if the confirm event has no window ID', async () => {
+    const bindings = await import('../bindings/changeme/core/appservice')
+
+    const { default: App } = await import('./App.vue')
+    mount(App)
+
+    await eventHandlers.get('app:confirmQuitWindow')?.({ data: null })
+
+    expect(bindings.ConfirmQuitWindow).not.toHaveBeenCalled()
+    expect(bindings.CancelQuit).toHaveBeenCalledTimes(1)
+    expect(bindings.CloseWindow).toHaveBeenCalledTimes(1)
   })
 
   it('cancels coordinated quit when the user cancels an unsaved close prompt', async () => {
@@ -141,7 +157,7 @@ describe('App source mode', () => {
 
     await eventHandlers.get('file:open')?.({ data: '/tmp/note.md' })
     await wrapper.find('.mock-editor').setValue('# Unsaved')
-    await eventHandlers.get('app:confirmQuitWindow')?.()
+    await eventHandlers.get('app:confirmQuitWindow')?.({ data: 1 })
 
     expect(bindings.CancelQuit).toHaveBeenCalledTimes(1)
     expect(bindings.ConfirmQuitWindow).not.toHaveBeenCalled()

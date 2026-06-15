@@ -110,9 +110,28 @@ function commitSourceModeEdits() {
 }
 
 // ── Close / quit dialog ────────────────────────────────────────────────────
+// Window ID captured from the app:confirmQuitWindow event payload. Go puts
+// the originating window's ID into the event so the frontend can echo it
+// back to ConfirmQuitWindow — the binding no longer relies on pulling the
+// window out of a request context (which Wails 3 generic RPC does not
+// populate), so the quit coordinator is guaranteed to advance.
+let pendingConfirmWindowID: number | null = null
+
 function executeClose(action: 'close' | 'quit') {
-  if (action === 'quit') ConfirmQuitWindow()
-  else CloseWindow()
+  if (action === 'quit') {
+    if (pendingConfirmWindowID == null) {
+      // Defensive: if the event payload ever goes missing, fall back to
+      // closing this window directly and cancel the queued quit so the
+      // other windows can still be asked.
+      console.warn('app:confirmQuitWindow fired without a window ID payload')
+      CancelQuit()
+      CloseWindow()
+      return
+    }
+    ConfirmQuitWindow(pendingConfirmWindowID)
+  } else {
+    CloseWindow()
+  }
 }
 
 function cancelClose(action: 'close' | 'quit') {
@@ -132,7 +151,18 @@ async function requestClose(action: 'close' | 'quit') {
     const filename = filePath.value.split('/').pop() ?? ''
     const result = await ShowSaveDialog(filename)
     if (result === 'save') {
-      await saveFile()
+      try {
+        await saveFile()
+      } catch (err) {
+        // Save failed — surface the error and abort the close so the user
+        // can retry or pick a different location. Previously the rejection
+        // bubbled out of the Events.On handler as an unhandled promise
+        // rejection and the user saw nothing.
+        console.error('Save failed:', err)
+        alert(t('dialog.saveFailed'))
+        cancelClose(action)
+        return
+      }
       if (!isDirty.value) executeClose(action)
       else cancelClose(action)
     } else if (result === 'discard') {
@@ -145,7 +175,14 @@ async function requestClose(action: 'close' | 'quit') {
     // New unsaved file: single native sheet with filename + location picker
     const result = await ShowCloseSheet('', '')
     if (result.startsWith('save:')) {
-      await saveToPath(result.slice(5))
+      try {
+        await saveToPath(result.slice(5))
+      } catch (err) {
+        console.error('Save failed:', err)
+        alert(t('dialog.saveFailed'))
+        cancelClose(action)
+        return
+      }
       executeClose(action)
     } else if (result === 'discard') {
       resetFile()
@@ -259,7 +296,20 @@ onMounted(async () => {
   window.addEventListener('window:closeRequested', onCloseRequested)
   cleanups.push(() => window.removeEventListener('window:closeRequested', onCloseRequested))
 
-  cleanups.push(Events.On('app:confirmQuitWindow', () => requestClose('quit')))
+  cleanups.push(Events.On('app:confirmQuitWindow', (ev) => {
+    // Go puts the originating window's ID in the payload. Capture it so
+    // executeClose('quit') can echo it back to ConfirmQuitWindow.
+    const raw = (ev as { data?: unknown })?.data
+    let id: number | null = null
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      id = raw
+    } else if (typeof raw === 'string') {
+      const parsed = Number(raw)
+      if (Number.isFinite(parsed)) id = parsed
+    }
+    pendingConfirmWindowID = id
+    requestClose('quit')
+  }))
 
   // Notify Go that this window's frontend is ready to receive events
 })
