@@ -189,7 +189,7 @@ jobs:
             -volname "Fast MD" \
             -srcfolder "${volume_dir}" \
             -ov \
-            -format UDZO \
+            -format ULFO \
             -fs HFS+ \
             -scrub \
             "dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal/${APP_NAME}-${GITHUB_REF_NAME}-darwin-universal.dmg"

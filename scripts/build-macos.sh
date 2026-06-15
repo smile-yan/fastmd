@@ -57,7 +57,7 @@ SetFile -a C "$MOUNT_DIR"
 "$LSREGISTER" -u "$MOUNT_DIR/$APP_NAME.app" 2>/dev/null || true
 hdiutil detach "${DISK_DEV:-$MOUNT_DIR}" -force
 
-hdiutil convert "$DMG_TMP" -format UDZO -o "$DMG_OUT"
+hdiutil convert "$DMG_TMP" -format ULFO -o "$DMG_OUT"
 rm -f "$DMG_TMP"
 
 ICON_TMP="$BIN_DIR/$APP_NAME-dmg-icon.icns"
