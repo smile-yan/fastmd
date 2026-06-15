@@ -35,6 +35,7 @@
       :content="content"
       :is-dirty="isDirty"
       :save-status="saveStatus"
+      :save-error="saveError"
     />
     <Settings
       v-if="showSettings"
@@ -59,7 +60,7 @@ import { useLocale } from './composables/useLocale'
 import { buildMarkdownExportHtml } from './exportHtml'
 import { CancelQuit, CloseWindow, ConfirmQuitWindow, ShowSaveDialog, ShowCloseSheet, ExportPDF } from '../bindings/changeme/core/appservice'
 
-const { filePath, content, isDirty, saveStatus, newFile, openFile, saveFile, saveAs, saveToPath, resetFile } = useFile()
+const { filePath, content, isDirty, saveStatus, saveError, newFile, openFile, saveFile, saveAs, saveToPath, resetFile } = useFile()
 const { t } = useLocale()
 const titlebarTitle = computed(() =>
   filePath.value ? filePath.value.split('/').pop()! : t('menu.new')
@@ -237,6 +238,13 @@ async function handleExportPDF() {
   try {
     await ExportPDF(html, title)
   } catch (err) {
+    // ExportPDF throws on folio/webview failure AND on user cancel
+    // (Go returns fmt.Errorf("cancelled")). Skip the alert for the
+    // cancel case so the user isn't yelled at for closing a dialog.
+    const message = err instanceof Error ? err.message : String(err)
+    if (!/cancel/i.test(message)) {
+      alert(t('dialog.exportFailed'))
+    }
     console.error('Export PDF failed:', err)
   }
 }

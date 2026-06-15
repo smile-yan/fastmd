@@ -104,4 +104,76 @@ describe('useFile', () => {
     expect(fileName.value).toBe('未命名')
     expect(saveStatus.value).toBe('')
   })
+
+  it('captures the write error in saveError when WriteFile rejects', async () => {
+    const bindings = await import('../../bindings/changeme/core/appservice')
+    vi.mocked(bindings.WriteFile).mockRejectedValue(new Error('disk full'))
+
+    const { useFile, setContent } = await import('./useFile')
+    const { filePath, saveError, saveFile, isDirty } = useFile()
+    filePath.value = '/tmp/test.md'
+    setContent('# data')
+    isDirty.value = true
+
+    await saveFile()
+
+    expect(saveError.value).toBe('disk full')
+    // isDirty must stay true so the user knows the change is still in
+    // memory and the dot stays visible.
+    expect(isDirty.value).toBe(true)
+  })
+
+  it('clears saveError on the next successful save', async () => {
+    const bindings = await import('../../bindings/changeme/core/appservice')
+    vi.mocked(bindings.WriteFile)
+      .mockRejectedValueOnce(new Error('first try fails'))
+      .mockResolvedValueOnce(undefined)
+
+    const { useFile, setContent } = await import('./useFile')
+    const { filePath, saveError, saveFile, isDirty } = useFile()
+    filePath.value = '/tmp/test.md'
+    setContent('# data')
+    isDirty.value = true
+
+    await saveFile()
+    expect(saveError.value).toBe('first try fails')
+
+    await saveFile()
+    expect(saveError.value).toBeNull()
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('captures the error from saveAs when WriteFile rejects', async () => {
+    const bindings = await import('../../bindings/changeme/core/appservice')
+    vi.mocked(bindings.SaveFileDialog).mockResolvedValue('/tmp/new.md')
+    vi.mocked(bindings.WriteFile).mockRejectedValue(new Error('permission denied'))
+
+    const { useFile, setContent } = await import('./useFile')
+    const { filePath, saveError, saveAs } = useFile()
+    setContent('# data')
+
+    await saveAs()
+
+    expect(saveError.value).toBe('permission denied')
+    // filePath is set BEFORE the write attempt, so the user can see
+    // where the failed save targeted.
+    expect(filePath.value).toBe('/tmp/new.md')
+  })
+
+  it('captures the error from auto-save when WriteFile rejects', async () => {
+    vi.useFakeTimers()
+    const bindings = await import('../../bindings/changeme/core/appservice')
+    vi.mocked(bindings.WriteFile).mockRejectedValue(new Error('disk full'))
+
+    const { useFile, setContent } = await import('./useFile')
+    const { filePath, saveError } = useFile()
+    filePath.value = '/tmp/auto.md'
+    setContent('# auto')
+
+    await vi.advanceTimersByTimeAsync(10_000)
+
+    expect(saveError.value).toBe('disk full')
+
+    vi.useRealTimers()
+  })
 })

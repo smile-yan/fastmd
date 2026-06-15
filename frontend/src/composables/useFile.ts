@@ -13,11 +13,22 @@ const content = ref<string>('')
 const isDirty = ref<boolean>(false)
 const lastSaved = ref<Date | null>(null)
 const isSaving = ref<boolean>(false)
+// saveError holds the most recent failure from saveFile / saveAs / saveToPath
+// / auto-save. The previous design let WriteFile rejections bubble up as
+// unhandled promise rejections, so the user saw "Saving..." resolve into
+// "Unsaved changes" with no explanation. surfacing the error here lets the
+// StatusBar render it next to the save indicator.
+const saveError = ref<string | null>(null)
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
 
 const defaultSettings = {
   autoSave: true,
   autoSaveInterval: 10,
+}
+
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  return String(err)
 }
 
 export function setContent(newContent: string) {
@@ -49,6 +60,11 @@ function scheduleAutoSave() {
         await WriteFile(filePath.value, content.value)
         isDirty.value = false
         lastSaved.value = new Date()
+        saveError.value = null
+      } catch (err) {
+        // Disk full, permission denied, trust-check failure, etc. Surface
+        // it via the StatusBar; the next successful save clears it.
+        saveError.value = toErrorMessage(err)
       } finally {
         isSaving.value = false
       }
@@ -103,6 +119,9 @@ export function useFile() {
       await WriteFile(filePath.value, content.value)
       isDirty.value = false
       lastSaved.value = new Date()
+      saveError.value = null
+    } catch (err) {
+      saveError.value = toErrorMessage(err)
     } finally {
       isSaving.value = false
     }
@@ -118,6 +137,9 @@ export function useFile() {
       await WriteFile(newPath, content.value)
       isDirty.value = false
       lastSaved.value = new Date()
+      saveError.value = null
+    } catch (err) {
+      saveError.value = toErrorMessage(err)
     } finally {
       isSaving.value = false
     }
@@ -131,6 +153,9 @@ export function useFile() {
       filePath.value = path
       isDirty.value = false
       lastSaved.value = new Date()
+      saveError.value = null
+    } catch (err) {
+      saveError.value = toErrorMessage(err)
     } finally {
       isSaving.value = false
     }
@@ -158,6 +183,7 @@ export function useFile() {
     isDirty,
     lastSaved,
     isSaving,
+    saveError,
     saveStatus,
     fileName,
     setContent,
