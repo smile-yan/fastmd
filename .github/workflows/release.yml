@@ -119,7 +119,7 @@ jobs:
           pattern: ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-*
           path: dist
 
-      - name: Create per-arch app bundles and zips
+      - name: Create per-arch app bundles and DMGs
         shell: bash
         run: |
           set -euo pipefail
@@ -129,9 +129,10 @@ jobs:
             bin_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}"
             app_dir="/tmp/${APP_NAME}-${arch}.app"
             dist_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}-pkg"
+            volume_dir="/tmp/${APP_NAME}-${arch}-dmg"
 
-            rm -rf "${app_dir}" "${dist_dir}"
-            mkdir -p "${app_dir}/Contents/MacOS" "${app_dir}/Contents/Resources" "${dist_dir}"
+            rm -rf "${app_dir}" "${dist_dir}" "${volume_dir}"
+            mkdir -p "${app_dir}/Contents/MacOS" "${app_dir}/Contents/Resources" "${dist_dir}" "${volume_dir}"
 
             cp "${bin_dir}/${APP_NAME}" "${app_dir}/Contents/MacOS/${APP_NAME}"
             chmod +x "${app_dir}/Contents/MacOS/${APP_NAME}"
@@ -168,23 +169,34 @@ jobs:
               '</dict>' \
               '</plist>' > "${app_dir}/Contents/Info.plist"
 
-            (cd /tmp && zip -r -9 "${GITHUB_WORKSPACE}/${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.app.zip" "${APP_NAME}-${arch}.app")
-            unzip -t "${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.app.zip"
-            shasum -a 256 "${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.app.zip"
+            cp -R "${app_dir}" "${volume_dir}/"
+            ln -s /Applications "${volume_dir}/Applications"
+
+            hdiutil create \
+              -volname "Fast MD" \
+              -srcfolder "${volume_dir}" \
+              -ov \
+              -format ULFO \
+              -fs HFS+ \
+              -scrub \
+              "${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.dmg"
+
+            hdiutil verify "${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.dmg"
+            shasum -a 256 "${dist_dir}/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}.dmg"
           done
 
       - name: Upload macOS arm64 package artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg
-          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64.app.zip
+          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64.dmg
           if-no-files-found: error
 
       - name: Upload macOS amd64 package artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg
-          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64.app.zip
+          path: dist/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64.dmg
           if-no-files-found: error
 
   release:
@@ -222,10 +234,10 @@ jobs:
           mkdir -p windows-amd64
           mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fast-md.exe windows-amd64/fast-md.exe
           (cd windows-amd64 && zip -9 fast-md-${{ github.ref_name }}-windows-amd64.zip fast-md.exe && rm fast-md.exe)
-          # macOS: app bundles are already compressed as .zip
+          # macOS: DMGs are already compressed
           mkdir -p darwin-arm64 darwin-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/*.zip darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.app.zip
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/*.zip darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.app.zip
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/*.dmg darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.dmg
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/*.dmg darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.dmg
           ls -la */
 
       - name: Create draft release
@@ -236,5 +248,5 @@ jobs:
           files: |
             release-assets/linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64.tar.gz
             release-assets/windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.zip
-            release-assets/darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.app.zip
-            release-assets/darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.app.zip
+            release-assets/darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.dmg
+            release-assets/darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.dmg
