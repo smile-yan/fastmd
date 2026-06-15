@@ -238,17 +238,19 @@ jobs:
         with:
           path: release-assets
 
-      - name: Rename artifacts to expected names
+      - name: Package release assets
         shell: bash
         run: |
           cd release-assets
-          # Linux
+          # Linux: ship a gzip-compressed tarball
           mkdir -p linux-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64/fast-md linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64
-          # Windows
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64/fast-md linux-amd64/fast-md
+          (cd linux-amd64 && GZIP=-9 tar -czf fast-md-${{ github.ref_name }}-linux-amd64.tar.gz fast-md && rm fast-md)
+          # Windows: ship a zip archive
           mkdir -p windows-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fast-md.exe windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.exe
-          # macOS
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fast-md.exe windows-amd64/fast-md.exe
+          (cd windows-amd64 && zip -9 fast-md-${{ github.ref_name }}-windows-amd64.zip fast-md.exe && rm fast-md.exe)
+          # macOS: DMG is already compressed
           mkdir -p darwin-universal
           mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-universal/*.dmg darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.dmg
           ls -la */
@@ -259,6 +261,6 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            release-assets/linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64
-            release-assets/windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.exe
+            release-assets/linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64.tar.gz
+            release-assets/windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.zip
             release-assets/darwin-universal/fast-md-${{ github.ref_name }}-darwin-universal.dmg
