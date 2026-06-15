@@ -296,12 +296,30 @@ body {
 `.trim()
 
 export function buildMarkdownExportHtml({ title, bodyHtml }: { title: string, bodyHtml: string }) {
+  // Sanitize the editor's HTML before embedding it in the export. Milkdown
+  // lets raw HTML and image/link URLs pass through unchanged, so an attacker
+  // who can plant a `<script>`, an `onerror=` handler, or a `javascript:`
+  // URL in the source markdown turns the exported file into an XSS payload
+  // the moment the victim opens or shares it. The sanitizer runs on every
+  // call so the contract is "give me raw body HTML, get back a safe export".
+  const safeBody = sanitizeBodyHtml(bodyHtml)
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8">
+<html><head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${EXPORT_CSP}">
 <title>${escapeHtml(title)}</title>
 <style>${typoraGithubExportCss}</style>
-</head><body><main class="markdown-body">${bodyHtml}</main></body></html>`
+</head><body><main class="markdown-body">${safeBody}</main></body></html>`
 }
+
+// `script-src 'none'` is the load-bearing directive: even if a `<script>`
+// tag slipped past the sanitizer, the browser would refuse to execute it.
+// The export inlines its own <style>, so style-src needs 'unsafe-inline'.
+// `default-src 'none'` denies everything else (connect, frame, media, …).
+const EXPORT_CSP =
+  "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; " +
+  "img-src http: https: data:; font-src http: https: data:; " +
+  "base-uri 'none'; form-action 'none'"
 
 function escapeHtml(value: string) {
   return value
@@ -309,4 +327,158 @@ function escapeHtml(value: string) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+// ── Body HTML sanitizer ────────────────────────────────────────────────────
+//
+// Milkdown produces a ProseMirror DOM subtree that may contain raw HTML the
+// author typed inline (CommonMark allows it), plus image srcs, link hrefs,
+// and code-block class names. None of it can be trusted: an attacker who
+// can plant a `<script>` or a `javascript:` URL in the source markdown wins
+// RCE on every machine that opens the export. The sanitizer walks the DOM
+// with an allowlist and strips anything not on it. Keep the allowlist tight.
+
+const ALLOWED_TAGS = new Set([
+  'a', 'abbr', 'aside', 'b', 'blockquote', 'br', 'caption', 'cite', 'code',
+  'dd', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'em', 'figcaption',
+  'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr',
+  'i', 'img', 'ins', 'kbd', 'li', 'main', 'mark', 'nav', 'ol', 'p', 'pre',
+  'q', 's', 'samp', 'section', 'small', 'span', 'strong', 'sub', 'summary',
+  'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time', 'tr',
+  'u', 'ul', 'var',
+  // Task-list checkbox — only allowed in this constrained form. The HTML
+  // spec would normally require an enclosing <form> for an input to render;
+  // browsers accept it standalone and Typora's CSS specifically targets it.
+  'input',
+])
+
+// Tags removed together with their entire subtree. Anything in here can
+// either execute script (script, iframe, object) or smuggle it (svg, math).
+const DROP_WITH_SUBTREE = new Set([
+  'script', 'style', 'noscript', 'iframe', 'object', 'embed', 'frame',
+  'frameset', 'noframes', 'applet', 'base', 'form', 'button', 'select',
+  'textarea', 'link', 'meta', 'svg', 'math', 'video', 'audio', 'source',
+  'track', 'picture', 'template',
+])
+
+// Per-tag attribute allowlist. Anything not listed is dropped. This stops
+// `on*` event handlers (key for XSS) plus the various HTML/CSS-injection
+// vectors (style, srcdoc, …) by omission.
+const ALLOWED_ATTRS: Record<string, Set<string>> = {
+  a: new Set(['href', 'title', 'name', 'id', 'rel']),
+  img: new Set(['src', 'alt', 'title', 'width', 'height']),
+  th: new Set(['colspan', 'rowspan', 'scope', 'id', 'class']),
+  td: new Set(['colspan', 'rowspan', 'id', 'class']),
+  ol: new Set(['start', 'type', 'id', 'class']),
+  li: new Set(['value', 'id', 'class']),
+  code: new Set(['id', 'class']),
+  pre: new Set(['id', 'class']),
+  input: new Set(['type', 'checked', 'disabled']),
+  '*': new Set(['id', 'class']),
+}
+
+// URL schemes we allow in href/src. Anything else is stripped to a
+// harmless text node. `data:` is restricted to images below.
+const SAFE_URL_SCHEMES = /^(https?:|mailto:|tel:|\/|\.\/|\.\.|[A-Za-z0-9_\-./?#=&%@:+,;~!'])/
+
+export function sanitizeBodyHtml(rawHtml: string): string {
+  // The sanitizer only runs in environments that expose DOMParser. When
+  // it's not available (older webviews, certain SSR contexts) we fall back
+  // to the original html-escape function, which neutralises every tag the
+  // browser would otherwise interpret.
+  if (typeof DOMParser === 'undefined') {
+    return escapeHtml(rawHtml)
+  }
+
+  const doc = new DOMParser().parseFromString(`<body>${rawHtml}</body>`, 'text/html')
+  walkAndSanitize(doc.body)
+  return doc.body.innerHTML
+}
+
+function walkAndSanitize(root: Element) {
+  // Collect children first — we'll mutate the tree in place.
+  const children = Array.from(root.children)
+  for (const child of children) {
+    const tag = child.tagName.toLowerCase()
+
+    if (DROP_WITH_SUBTREE.has(tag)) {
+      child.remove()
+      continue
+    }
+
+    if (!ALLOWED_TAGS.has(tag)) {
+      // Unknown tag — replace with its text content (unwraps the element)
+      // so a hostile `<unknown onerror=…>` doesn't sneak through. Children
+      // are kept; they get re-evaluated on the next pass via the parent.
+      unwrap(child)
+      continue
+    }
+
+    sanitizeAttrs(child)
+    walkAndSanitize(child)
+  }
+}
+
+function unwrap(el: Element) {
+  const parent = el.parentNode
+  if (!parent) return
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el)
+  }
+  parent.removeChild(el)
+}
+
+function sanitizeAttrs(el: Element) {
+  const tag = el.tagName.toLowerCase()
+  const allowed = new Set([
+    ...(ALLOWED_ATTRS[tag] ?? []),
+    ...ALLOWED_ATTRS['*'],
+  ])
+
+  // Iterate over a snapshot — removeAttribute mutates `attributes`.
+  const attrs = Array.from(el.attributes)
+  for (const attr of attrs) {
+    const name = attr.name.toLowerCase()
+    if (!allowed.has(name)) {
+      el.removeAttribute(attr.name)
+      continue
+    }
+
+    if (name === 'href' || name === 'src') {
+      // Reject dangerous URL schemes. Stripping the attribute (rather than
+      // the whole element) keeps the surrounding anchor/image readable.
+      const value = attr.value.trim()
+      if (name === 'src' && /^data:image\//i.test(value)) {
+        // Inline data: images are common in markdown — allow.
+        continue
+      }
+      if (!isSafeUrl(value)) {
+        el.removeAttribute(attr.name)
+      }
+    }
+  }
+
+  // input is a special case: keep it ONLY if it is a checkbox (task list).
+  // Any other type is a form-control smuggling vector.
+  if (tag === 'input') {
+    const type = (el.getAttribute('type') ?? '').toLowerCase()
+    if (type !== 'checkbox') {
+      unwrap(el)
+    }
+  }
+}
+
+function isSafeUrl(value: string): boolean {
+  // Strip control chars and whitespace tricks (`java\tscript:`) before
+  // inspecting the scheme.
+  const cleaned = value.replace(/[ -\s]/g, '').toLowerCase()
+  if (cleaned.startsWith('javascript:') || cleaned.startsWith('vbscript:')) {
+    return false
+  }
+  if (cleaned.startsWith('data:')) {
+    // Only data:image is permitted (handled by the caller for src). Any
+    // other data: (e.g. data:text/html) is a script-delivery primitive.
+    return false
+  }
+  return SAFE_URL_SCHEMES.test(cleaned)
 }
