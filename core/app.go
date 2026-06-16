@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -13,6 +15,43 @@ import (
 	"github.com/carlos7ags/folio/html"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
+
+// AppInfo carries the metadata shown in the About dialog. Version is sourced
+// from runtime/debug.ReadBuildInfo — when the binary is built with
+// `-ldflags '-X main.version=...'`, that value surfaces here; otherwise Go
+// fills it with vcs.revision and vcs.time from the build settings. The Go
+// runtime version is included so users can file useful bug reports.
+type AppInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	Built   string `json:"built"`
+	Go      string `json:"go"`
+}
+
+const appName = "fast-md"
+
+func (s *AppService) GetAppInfo() AppInfo {
+	info := AppInfo{
+		Name:    appName,
+		Version: "dev",
+		Go:      runtime.Version(),
+	}
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		if v := bi.Main.Version; v != "" && v != "(devel)" {
+			info.Version = v
+		}
+		for _, set := range bi.Settings {
+			switch set.Key {
+			case "vcs.revision":
+				info.Commit = set.Value
+			case "vcs.time":
+				info.Built = set.Value
+			}
+		}
+	}
+	return info
+}
 
 type FileInfo struct {
 	Name  string `json:"name"`

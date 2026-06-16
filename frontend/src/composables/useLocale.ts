@@ -38,6 +38,16 @@ const translations = {
       about: '关于',
     },
 
+    // About dialog
+    about: {
+      tagline: 'Typora 风格的 macOS Markdown 编辑器',
+      version: '版本',
+      commit: '提交',
+      built: '构建时间',
+      runtime: '运行时',
+      viewOnGitHub: '在 GitHub 上查看',
+    },
+
     // File
     file: {
       saved: '已保存',
@@ -171,6 +181,16 @@ const translations = {
       close: 'Close',
       help: 'Help',
       about: 'About',
+    },
+
+    // About dialog
+    about: {
+      tagline: 'A Typora-inspired Markdown editor for macOS',
+      version: 'Version',
+      commit: 'Commit',
+      built: 'Built',
+      runtime: 'Runtime',
+      viewOnGitHub: 'View on GitHub',
     },
 
     // File

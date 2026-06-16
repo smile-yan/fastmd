@@ -43,6 +43,7 @@
       @theme-change="handleThemeChange"
       @content-theme-change="applyContentTheme"
     />
+    <About v-if="showAbout" @close="showAbout = false" />
   </div>
 </template>
 
@@ -53,6 +54,7 @@ import Editor from './components/Editor.vue'
 import Sidebar from './components/Sidebar.vue'
 import StatusBar from './components/StatusBar.vue'
 import Settings from './components/Settings.vue'
+import About from './components/About.vue'
 import { useFile, setContent } from './composables/useFile'
 import { useTheme } from './composables/useTheme'
 import { useContentTheme } from './composables/useContentTheme'
@@ -71,6 +73,7 @@ const { applyContentTheme } = useContentTheme()
 const sidebarOpen = ref(false)
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
 const showSettings = ref(false)
+const showAbout = ref(false)
 const sourceMode = ref(false)
 const sourceContent = ref('')
 const sourceTextarea = ref<HTMLTextAreaElement | null>(null)
@@ -288,6 +291,7 @@ onMounted(async () => {
   }))
   cleanups.push(Events.On('menu:toggleSidebar', () => { sidebarOpen.value = !sidebarOpen.value }))
   cleanups.push(Events.On('menu:settings', () => { showSettings.value = true }))
+  cleanups.push(Events.On('app:aboutRequested', () => { showAbout.value = true }))
   cleanups.push(Events.On('menu:toggleTheme', () => toggleTheme()))
   cleanups.push(Events.On('menu:exportHTML', () => handleExportHTML()))
   cleanups.push(Events.On('menu:exportPDF', () => handleExportPDF()))
