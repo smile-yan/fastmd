@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -135,6 +136,42 @@ func openFocusedDeveloperTools(app *application.App) {
 	OpenDeveloperTools(app.Window.Current())
 }
 
+// firstFileFromArgs scans argv (typically os.Args[1:]) for the first path
+// whose extension is .md or .markdown (case-insensitive), expanding a
+// leading "~/" or lone "~" via os.UserHomeDir, and returns its absolute
+// form. Returns "" when no candidate is found.
+//
+// The parser is intentionally narrow — only one positional file is
+// accepted, mirroring what macOS Launch Services hands the app via
+// ApplicationOpenedWithFile. Flags and unrelated args are ignored so a
+// stray -psn_0 from Launch Services or a parent process's argv never
+// confuses the heuristic.
+func firstFileFromArgs(argv []string) string {
+	home, _ := os.UserHomeDir()
+	for _, arg := range argv {
+		if arg == "" {
+			continue
+		}
+		path := arg
+		switch {
+		case path == "~" && home != "":
+			path = home
+		case strings.HasPrefix(path, "~/") && home != "":
+			path = filepath.Join(home, path[2:])
+		}
+		lower := strings.ToLower(path)
+		if !strings.HasSuffix(lower, ".md") && !strings.HasSuffix(lower, ".markdown") {
+			continue
+		}
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			continue
+		}
+		return abs
+	}
+	return ""
+}
+
 // RegisterDeveloperToolsShortcut binds F12 to toggle DevTools on the
 // currently-focused window.
 func RegisterDeveloperToolsShortcut(app *application.App) {
@@ -201,7 +238,18 @@ func Run(assets fs.FS) error {
 	cfg := LoadConfig()
 	SetLocale(cfg.Language)
 
-	NewEditorWindow(app)
+	// If the user passed a file on the command line (e.g. `fastmd hello.md`
+	// via a symlinked binary in $PATH), open it in a fresh window
+	// immediately. The directory is trusted up-front so the frontend's
+	// initial ReadFile call succeeds without prompting.
+	if initialFile := firstFileFromArgs(os.Args[1:]); initialFile != "" {
+		if err := Service.trustDir(filepath.Dir(initialFile)); err != nil {
+			log.Printf("trustDir(%s) failed: %v", filepath.Dir(initialFile), err)
+		}
+		NewEditorWindowWithFile(app, initialFile)
+	} else {
+		NewEditorWindow(app)
+	}
 
 	app.Event.OnApplicationEvent(events.Mac.ApplicationShouldHandleReopen, func(event *application.ApplicationEvent) {
 		if !event.Context().HasVisibleWindows() {
