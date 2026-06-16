@@ -180,24 +180,6 @@ func RegisterDeveloperToolsShortcut(app *application.App) {
 	})
 }
 
-// OpenedFileTarget is anything that can receive a "file:open" event.
-type OpenedFileTarget interface {
-	EmitEvent(name string, data ...any) bool
-}
-
-// RouteOpenedFile sends file:open to the focused window if present, otherwise
-// calls openNewWindow with the path.
-func RouteOpenedFile(filePath string, current OpenedFileTarget, openNewWindow func(string)) {
-	if filePath == "" {
-		return
-	}
-	if current != nil {
-		current.EmitEvent("file:open", filePath)
-		return
-	}
-	openNewWindow(filePath)
-}
-
 // Run wires up the Wails app and starts its event loop. assets must be the
 // //go:embed all:frontend/dist docs/help FS from the root main package; it
 // provides the bundled frontend and the help documents.
@@ -259,16 +241,18 @@ func Run(assets fs.FS) error {
 
 	app.Event.OnApplicationEvent(events.Common.ApplicationOpenedWithFile, func(event *application.ApplicationEvent) {
 		path := event.Context().Filename()
-		// The user double-clicked a file in Finder (or used "Open With"
-		// from another app) — trust its directory so ReadFile accepts it.
-		if path != "" && Service != nil {
+		if path == "" {
+			return
+		}
+		// The user double-clicked a file in Finder or used "Open With"
+		// from another app — the OS expects a new window per request,
+		// never to overwrite whatever the focused window is editing.
+		if Service != nil {
 			if err := Service.trustDir(filepath.Dir(path)); err != nil {
 				log.Printf("trustDir(%s) failed: %v", filepath.Dir(path), err)
 			}
 		}
-		RouteOpenedFile(path, app.Window.Current(), func(path string) {
-			NewEditorWindowWithFile(app, path)
-		})
+		NewEditorWindowWithFile(app, path)
 	})
 
 	buildMenuI18n(app)

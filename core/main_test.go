@@ -29,17 +29,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-type fakeOpenedFileWindow struct {
-	eventName string
-	eventData []any
-}
-
-func (w *fakeOpenedFileWindow) EmitEvent(name string, data ...any) bool {
-	w.eventName = name
-	w.eventData = data
-	return true
-}
-
 type fakeFullscreenWindow struct {
 	toggleCount int
 }
@@ -284,46 +273,39 @@ func assertKeyBindingRegistered(t *testing.T, app *application.App, accelerator 
 	t.Fatalf("expected key binding %q to be registered", accelerator)
 }
 
-func TestRouteOpenedFileEmitsFileOpenToCurrentWindow(t *testing.T) {
-	window := &fakeOpenedFileWindow{}
-	openedNew := false
-
-	RouteOpenedFile("/tmp/new.md", window, func(string) {
-		openedNew = true
-	})
-
-	if openedNew {
-		t.Fatal("expected existing window to receive file:open instead of opening a new window")
+// Regression guard for the "second Finder Open With overwrites the first
+// window" bug: macOS Finder "Open With" / double-click must always spawn
+// a new editor window per request, even when another editor window is
+// already focused. The ApplicationOpenedWithFile handler in run.go must
+// therefore never be wired through a "route to current window" helper.
+// If you re-introduce such a helper, the event handler must not call it.
+func TestApplicationOpenedWithFileAlwaysSpawnsNewWindow(t *testing.T) {
+	// Read the source as a string and assert the handler does not call
+	// RouteOpenedFile / app.Window.Current() before opening a window.
+	src, err := os.ReadFile("run.go")
+	if err != nil {
+		t.Fatalf("read run.go: %v", err)
 	}
-	if window.eventName != "file:open" {
-		t.Fatalf("expected file:open event, got %q", window.eventName)
+	text := string(src)
+
+	// Locate the ApplicationOpenedWithFile handler.
+	start := strings.Index(text, "OnApplicationEvent(events.Common.ApplicationOpenedWithFile")
+	if start < 0 {
+		t.Fatal("ApplicationOpenedWithFile handler not found in run.go")
 	}
-	if len(window.eventData) != 1 || window.eventData[0] != "/tmp/new.md" {
-		t.Fatalf("expected opened path payload, got %#v", window.eventData)
+	end := strings.Index(text[start:], "})")
+	if end < 0 {
+		t.Fatal("could not find end of ApplicationOpenedWithFile handler")
 	}
-}
+	handler := text[start : start+end+2]
 
-func TestRouteOpenedFileCreatesWindowWhenNoCurrentWindow(t *testing.T) {
-	var openedPath string
-
-	RouteOpenedFile("/tmp/new.md", nil, func(path string) {
-		openedPath = path
-	})
-
-	if openedPath != "/tmp/new.md" {
-		t.Fatalf("expected new window path %q, got %q", "/tmp/new.md", openedPath)
+	for _, banned := range []string{"RouteOpenedFile", "Window.Current()"} {
+		if strings.Contains(handler, banned) {
+			t.Errorf("ApplicationOpenedWithFile handler must not reference %q — every Finder "+
+				"file open must spawn a new window, never overwrite the focused one", banned)
+		}
 	}
-}
-
-func TestRouteOpenedFileIgnoresEmptyPath(t *testing.T) {
-	window := &fakeOpenedFileWindow{}
-	openedNew := false
-
-	RouteOpenedFile("", window, func(string) {
-		openedNew = true
-	})
-
-	if openedNew || window.eventName != "" {
-		t.Fatalf("expected empty path to do nothing, event=%q openedNew=%v", window.eventName, openedNew)
+	if !strings.Contains(handler, "NewEditorWindowWithFile") {
+		t.Error("ApplicationOpenedWithFile handler must call NewEditorWindowWithFile to open a new window")
 	}
 }
