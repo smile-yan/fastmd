@@ -434,6 +434,13 @@ html.dark .milkdown .ProseMirror {
   background-color: #f8f8f8 !important;
 }
 
+/* Hide the built-in tools bar (LanguagePicker + CopyButton + preview toggle)
+   on rendered code blocks. We will re-add a hover-revealed minimal bar
+   (language label + copy) in a follow-up step. */
+.milkdown .ProseMirror .milkdown-code-block .tools {
+  display: none !important;
+}
+
 html.dark .milkdown .ProseMirror pre,
 html.dark .milkdown .ProseMirror .milkdown-code-block {
   background-color: var(--bg-secondary) !important;
@@ -508,4 +515,40 @@ html.dark .milkdown .ProseMirror .milkdown-code-block .cm-activeLineGutter {
   .sidebar, .status-bar { display: none !important; }
   .editor-area { overflow: visible !important; }
   .milkdown .ProseMirror { padding: 0; max-width: 100%; }
+}
+
+/* ── Code-block line-number gutter ────────────────────────────────────────
+   CodeMirror's `lineNumbers()` extension is injected via the Crepe
+   CodeMirror feature config (see Editor.vue). It always renders the
+   gutter DOM; whether the gutter is actually visible is decided by the
+   container class `.hide-line-numbers` on Editor.vue's root <div>, which
+   mirrors the user's `showLineNumbers` setting in localStorage.
+
+   Structure inside a code block:
+     .milkdown-code-block
+       .cm-editor
+         .cm-gutters              ← the gutter (background, scrollbar)
+           .cm-lineNumbers        ← the actual line-number column
+         .cm-content              ← the code
+
+   We tint the gutter slightly darker than the code-block panel so the
+   separator is readable, and use --text-muted for the number colour so
+   it never competes with the code itself. */
+.milkdown .ProseMirror .milkdown-code-block .cm-gutters {
+  background-color: #f3f3f3 !important;
+  border-right: 1px solid #e7eaed !important;
+  color: var(--text-muted) !important;
+}
+
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-gutters {
+  background-color: #1f1f1f !important;
+  border-right-color: var(--border-color) !important;
+}
+
+/* When the user opts out of line numbers, drop the gutter panel entirely
+   (background, border, and the column itself) so the code fills the
+   whole row. The .hide-line-numbers class is on the Editor.vue root. */
+.hide-line-numbers .milkdown .ProseMirror .milkdown-code-block .cm-gutters,
+.hide-line-numbers .milkdown .ProseMirror .milkdown-code-block .cm-lineNumbers {
+  display: none !important;
 }
