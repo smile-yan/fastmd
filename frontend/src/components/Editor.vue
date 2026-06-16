@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Crepe, CrepeFeature } from '@milkdown/crepe'
+import { lineNumbers } from '@codemirror/view'
 import {
   addBlockTypeCommand,
   clearTextInCurrentBlockCommand,
@@ -50,10 +51,10 @@ function getShowLineNumbers(): boolean {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const settings = JSON.parse(raw)
-      return settings.showLineNumbers ?? false
+      return settings.showLineNumbers ?? true
     }
   } catch { /* ignore */ }
-  return false
+  return true
 }
 
 const props = defineProps<{
@@ -293,6 +294,16 @@ onMounted(async () => {
       [CrepeFeature.ListItem]: true,
       [CrepeFeature.LinkTooltip]: true,
       [CrepeFeature.Placeholder]: true,
+    },
+    featureConfigs: {
+      // Inject the CodeMirror `lineNumbers()` extension so each code block
+      // can show (or hide, via CSS) its own line-number gutter. Whether the
+      // gutter is actually visible is controlled by the user's
+      // `showLineNumbers` setting — see the `.hide-line-numbers` rule in
+      // style.css and the container class binding on this component.
+      [CrepeFeature.CodeMirror]: {
+        extensions: [lineNumbers()],
+      },
     },
   })
 

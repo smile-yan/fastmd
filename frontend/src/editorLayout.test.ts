@@ -64,7 +64,7 @@ describe('editor Typora GitHub body layout', () => {
     expect(css).toMatch(/\.milkdown\s+\.ProseMirror\s+table\s*{[^}]*border-collapse:\s*collapse\s*!important;[^}]*word-break:\s*initial\s*!important;/s)
     expect(css).toMatch(/\.milkdown\s+\.ProseMirror\s+table\s+th\s*{[^}]*border:\s*1px\s+solid\s+#dfe2e5\s*!important;[^}]*padding:\s*6px\s+13px\s*!important;/s)
     expect(css).toMatch(/\.milkdown\s+\.ProseMirror\s+pre\s*{[^}]*margin-top:\s*15px\s*!important;[^}]*background-color:\s*#f8f8f8\s*!important;/s)
-    expect(css).toMatch(/\.milkdown\s+\.ProseMirror\s+\.milkdown-code-block\s*{[^}]*border:\s*1px\s+solid\s+#e7eaed\s*!important;[^}]*background-color:\s*#f8f8f8\s*!important;/s)
+    expect(css).toMatch(/\.editor-container\s+\.milkdown\s+\.ProseMirror\s+\.milkdown-code-block\s*{[^}]*border:\s*1px\s+solid\s+#e7eaed\s*!important;[^}]*background-color:\s*#f8f8f8\s*!important;/s)
     expect(css).toMatch(/\.milkdown\s+\.ProseMirror\s+\.md-task-list-item\s*>\s*input\s*{[^}]*margin-left:\s*-1\.3em\s*!important;/s)
   })
 
