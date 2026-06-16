@@ -236,7 +236,7 @@ function getDefaults(): SettingsState {
     confirmOnClose: true,
     fontSize: 16,
     lineHeight: 1.7,
-    showLineNumbers: false,
+    showLineNumbers: true,
     theme: 'system',
     contentTheme: CONTENT_THEME_GITHUB,
     showSidebarByDefault: false,

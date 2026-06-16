@@ -51,10 +51,10 @@ function getShowLineNumbers(): boolean {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const settings = JSON.parse(raw)
-      return settings.showLineNumbers ?? false
+      return settings.showLineNumbers ?? true
     }
   } catch { /* ignore */ }
-  return false
+  return true
 }
 
 const props = defineProps<{
