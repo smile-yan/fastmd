@@ -392,9 +392,9 @@ html.dark .milkdown .ProseMirror {
 .milkdown .ProseMirror pre {
   margin-top: 15px !important;
   margin-bottom: 15px !important;
-  padding-top: 25px !important;
-  padding-bottom: 25px !important;
-  padding-left: 10px !important;
+  padding-top: 22px !important;
+  padding-bottom: 20px !important;
+  padding-left: 5px !important;
   padding-right: 10px !important;
   background-color: #f8f8f8 !important;
   overflow-x: auto !important;
@@ -414,9 +414,9 @@ html.dark .milkdown .ProseMirror {
 .editor-container .milkdown .ProseMirror .milkdown-code-block {
   margin-top: 15px !important;
   margin-bottom: 15px !important;
-  padding-top: 25px !important;
+  padding-top: 22px !important;
   padding-bottom: 0 !important;
-  padding-left: 10px !important;
+  padding-left: 5px !important;
   padding-right: 10px !important;
   border: 1px solid #e7eaed !important;
   border-radius: 3px !important;
@@ -428,7 +428,7 @@ html.dark .milkdown .ProseMirror {
    bottom edge of the code block — otherwise increasing the outer padding
    would push the scrollbar up and leave an empty band beneath it. */
 .milkdown .ProseMirror .milkdown-code-block .cm-content {
-  padding-bottom: 25px !important;
+  padding-bottom: 20px !important;
 }
 
 .milkdown .ProseMirror .milkdown-code-block .cm-editor,
