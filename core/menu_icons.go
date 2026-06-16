@@ -106,10 +106,18 @@ func menuIcon(name menuIconName) []byte {
 		fillRect(img, 5, 7, 11, 9, color.RGBA{R: 230, G: 75, B: 75, A: 255})
 		fillRect(img, 5, 10, 9, 12, color.RGBA{R: 230, G: 75, B: 75, A: 255})
 	case menuIconQuit:
-		fillRect(img, 7, 2, 9, 8, ink)
-		fillRect(img, 4, 5, 6, 11, color.RGBA{R: 230, G: 75, B: 75, A: 255})
-		fillRect(img, 10, 5, 12, 11, color.RGBA{R: 230, G: 75, B: 75, A: 255})
-		fillRect(img, 5, 11, 11, 13, color.RGBA{R: 230, G: 75, B: 75, A: 255})
+		// Power button: a closed ring with a vertical bar that
+		// breaks through the top. Ring is ink; bar is accent so
+		// the "break" reads at a glance even at 16x16.
+		fillRect(img, 6, 2, 10, 3, ink)
+		fillRect(img, 4, 3, 6, 4, ink)
+		fillRect(img, 10, 3, 12, 4, ink)
+		fillRect(img, 3, 4, 4, 12, ink)
+		fillRect(img, 12, 4, 13, 12, ink)
+		fillRect(img, 4, 12, 6, 13, ink)
+		fillRect(img, 10, 12, 12, 13, ink)
+		fillRect(img, 6, 13, 10, 14, ink)
+		fillRect(img, 7, 1, 9, 9, accent)
 	case menuIconAbout:
 		// Filled circle with a knocked-out "i" in the middle.
 		fillRect(img, 6, 2, 10, 3, ink)
