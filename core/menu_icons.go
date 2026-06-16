@@ -13,22 +13,24 @@ import (
 type menuIconName string
 
 const (
-	menuIconSidebar    menuIconName = "sidebar"
-	menuIconTheme      menuIconName = "theme"
-	menuIconFullscreen menuIconName = "fullscreen"
-	menuIconDevTools   menuIconName = "devtools"
-	menuIconNewFile    menuIconName = "new-file"
-	menuIconNewWindow  menuIconName = "new-window"
-	menuIconOpen       menuIconName = "open"
-	menuIconSave       menuIconName = "save"
-	menuIconSaveAs     menuIconName = "save-as"
-	menuIconExportHTML menuIconName = "export-html"
-	menuIconExportPDF  menuIconName = "export-pdf"
-	menuIconQuit       menuIconName = "quit"
-	menuIconQuickStart menuIconName = "quick-start"
-	menuIconShortcuts  menuIconName = "shortcuts"
-	menuIconMarkdown   menuIconName = "markdown"
-	menuIconMath       menuIconName = "math"
+	menuIconSidebar     menuIconName = "sidebar"
+	menuIconTheme       menuIconName = "theme"
+	menuIconFullscreen  menuIconName = "fullscreen"
+	menuIconDevTools    menuIconName = "devtools"
+	menuIconNewFile     menuIconName = "new-file"
+	menuIconNewWindow   menuIconName = "new-window"
+	menuIconOpen        menuIconName = "open"
+	menuIconSave        menuIconName = "save"
+	menuIconSaveAs      menuIconName = "save-as"
+	menuIconExportHTML  menuIconName = "export-html"
+	menuIconExportPDF   menuIconName = "export-pdf"
+	menuIconQuit        menuIconName = "quit"
+	menuIconAbout       menuIconName = "about"
+	menuIconPreferences menuIconName = "preferences"
+	menuIconQuickStart  menuIconName = "quick-start"
+	menuIconShortcuts   menuIconName = "shortcuts"
+	menuIconMarkdown    menuIconName = "markdown"
+	menuIconMath        menuIconName = "math"
 )
 
 var menuIconCache = map[menuIconName][]byte{}
@@ -108,6 +110,27 @@ func menuIcon(name menuIconName) []byte {
 		fillRect(img, 4, 5, 6, 11, color.RGBA{R: 230, G: 75, B: 75, A: 255})
 		fillRect(img, 10, 5, 12, 11, color.RGBA{R: 230, G: 75, B: 75, A: 255})
 		fillRect(img, 5, 11, 11, 13, color.RGBA{R: 230, G: 75, B: 75, A: 255})
+	case menuIconAbout:
+		// Filled circle with a knocked-out "i" in the middle.
+		fillRect(img, 6, 2, 10, 3, ink)
+		fillRect(img, 4, 3, 12, 4, ink)
+		fillRect(img, 3, 4, 13, 5, ink)
+		fillRect(img, 2, 5, 14, 11, ink)
+		fillRect(img, 3, 11, 13, 12, ink)
+		fillRect(img, 4, 12, 12, 13, ink)
+		fillRect(img, 6, 13, 10, 14, ink)
+		fillRect(img, 7, 4, 9, 5, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		fillRect(img, 7, 6, 9, 7, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		fillRect(img, 7, 8, 9, 12, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	case menuIconPreferences:
+		// Three horizontal sliders, each with a knob in a different
+		// position. Recognizable at 16x16 and reads as "settings".
+		fillRect(img, 2, 4, 14, 5, muted)
+		fillRect(img, 9, 3, 12, 7, accent)
+		fillRect(img, 2, 8, 14, 9, muted)
+		fillRect(img, 4, 7, 7, 11, accent)
+		fillRect(img, 2, 12, 14, 13, muted)
+		fillRect(img, 10, 11, 13, 15, accent)
 	case menuIconQuickStart:
 		fillRect(img, 3, 3, 8, 13, ink)
 		fillRect(img, 8, 3, 13, 13, muted)

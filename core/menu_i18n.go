@@ -145,17 +145,17 @@ func buildMenuI18n(app *application.App) {
 
 	if runtime.GOOS == "darwin" {
 		appMenu := menu.AddSubmenu(ms.appName)
-		appMenu.Add(ms.about).OnClick(func(_ *application.Context) {
+		setMenuIcon(appMenu.Add(ms.about).OnClick(func(_ *application.Context) {
 			app.Event.Emit("app:aboutRequested")
-		})
+		}), menuIconAbout)
 		appMenu.AddSeparator()
-		appMenu.Add(ms.preferences).SetAccelerator("Cmd+,").OnClick(func(_ *application.Context) {
+		setMenuIcon(appMenu.Add(ms.preferences).SetAccelerator("Cmd+,").OnClick(func(_ *application.Context) {
 			EmitToFocused(app, "menu:settings")
-		})
+		}), menuIconPreferences)
 		appMenu.AddSeparator()
-		appMenu.Add(ms.quit).SetAccelerator("Cmd+Q").OnClick(func(_ *application.Context) {
+		setMenuIcon(appMenu.Add(ms.quit).SetAccelerator("Cmd+Q").OnClick(func(_ *application.Context) {
 			RequestAppQuit()
-		})
+		}), menuIconQuit)
 	} else {
 		helpMenu := menu.AddSubmenu(ms.help)
 		addHelpDocumentMenuItems(app, helpMenu, helpDocumentEntries(ms))
