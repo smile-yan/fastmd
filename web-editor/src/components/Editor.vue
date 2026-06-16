@@ -5,6 +5,27 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Crepe, CrepeFeature } from '@milkdown/crepe'
+import { refractor } from 'refractor'
+import markdown from 'refractor/lang/markdown'
+import javascript from 'refractor/lang/javascript'
+import typescript from 'refractor/lang/typescript'
+import jsx from 'refractor/lang/jsx'
+import tsx from 'refractor/lang/tsx'
+import css from 'refractor/lang/css'
+import python from 'refractor/lang/python'
+import bash from 'refractor/lang/bash'
+import json from 'refractor/lang/json'
+import yaml from 'refractor/lang/yaml'
+import markup from 'refractor/lang/markup'
+import go from 'refractor/lang/go'
+import rust from 'refractor/lang/rust'
+import java from 'refractor/lang/java'
+import cpp from 'refractor/lang/cpp'
+import c from 'refractor/lang/c'
+import sql from 'refractor/lang/sql'
+import docker from 'refractor/lang/docker'
+import nginx from 'refractor/lang/nginx'
+import { prism, prismConfig } from '@milkdown/plugin-prism'
 import {
   addBlockTypeCommand,
   clearTextInCurrentBlockCommand,
@@ -42,6 +63,27 @@ import { deleteRow, isInTable, selectedRect } from '@milkdown/kit/prose/tables'
 import { applyEditorSettingsVariables } from '../composables/useEditorSettings'
 import '@milkdown/crepe/theme/common/style.css'
 import '@milkdown/crepe/theme/frame.css'
+import 'prismjs/themes/prism-tomorrow.css'
+
+refractor.register(markdown)
+refractor.register(javascript)
+refractor.register(typescript)
+refractor.register(jsx)
+refractor.register(tsx)
+refractor.register(css)
+refractor.register(python)
+refractor.register(bash)
+refractor.register(json)
+refractor.register(yaml)
+refractor.register(markup)
+refractor.register(go)
+refractor.register(rust)
+refractor.register(java)
+refractor.register(cpp)
+refractor.register(c)
+refractor.register(sql)
+refractor.register(docker)
+refractor.register(nginx)
 
 const STORAGE_KEY = 'fast-md-settings'
 
@@ -285,7 +327,7 @@ onMounted(async () => {
     defaultValue: props.modelValue,
     features: {
       [CrepeFeature.CodeMirror]: true,
-      [CrepeFeature.Latex]: true,
+      [CrepeFeature.Latex]: false,
       [CrepeFeature.Toolbar]: true,
       [CrepeFeature.BlockEdit]: true,
       [CrepeFeature.Table]: true,
@@ -296,7 +338,12 @@ onMounted(async () => {
     },
   })
 
-  crepe.editor.use(typoraMacOSKeymap)
+  crepe.editor
+    .use(typoraMacOSKeymap)
+    .use(prism)
+    .config((ctx) => {
+      ctx.set(prismConfig.key, { configureRefractor: () => refractor })
+    })
 
   crepe.on((api) => {
     api.markdownUpdated((_ctx, markdown) => {
@@ -368,6 +415,25 @@ onUnmounted(() => {
 
 :deep(.milkdown .ProseMirror p) {
   font-size: var(--editor-font-size, 16px) !important;
+}
+
+:deep(.milkdown .ProseMirror pre) {
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+:deep(.milkdown .ProseMirror pre code) {
+  font-family: var(--code-font-family, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace);
+  font-size: 0.9em;
+  background: transparent;
+  padding: 0;
+  color: #ccc;
+}
+
+:deep(.milkdown .ProseMirror .code-block) {
+  position: relative;
 }
 
 .hide-line-numbers :deep(.cm-lineNumbers),

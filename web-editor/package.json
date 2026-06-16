@@ -14,6 +14,9 @@
   "dependencies": {
     "@milkdown/crepe": "^7.21.1",
     "@milkdown/kit": "^7.21.1",
+    "@milkdown/plugin-prism": "^7.3.6",
+    "prismjs": "^1.29.0",
+    "refractor": "^4.8.1",
     "vue": "^3.2.45"
   },
   "devDependencies": {
