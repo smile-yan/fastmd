@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_NAME="${APP_NAME:-fast-md}"
+APP_NAME="${APP_NAME:-fastmd}"
 ARCH="${ARCH:-amd64}"
 FORMAT="${FORMAT:-nsis}"
 INSTALL_SCOPE="${INSTALL_SCOPE:-user}"

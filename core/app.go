@@ -29,7 +29,7 @@ type AppInfo struct {
 	Go      string `json:"go"`
 }
 
-const appName = "fast-md"
+const appName = "fastmd"
 
 func (s *AppService) GetAppInfo() AppInfo {
 	info := AppInfo{
@@ -65,7 +65,7 @@ type AppConfig struct {
 
 func getConfigPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, "Library", "Application Support", "fast-md", "config.json")
+	return filepath.Join(home, "Library", "Application Support", "fastmd", "config.json")
 }
 
 // LoadConfig reads the user's persisted config, falling back to defaults
@@ -350,7 +350,7 @@ func (s *AppService) ExportPDF(htmlContent string, title string) (string, error)
 
 func exportHTMLToPDF(htmlContent string, outputPath string) error {
 	doc := document.NewDocument(document.PageSizeA4)
-	doc.Info.Title = "fast-md export"
+	doc.Info.Title = "fastmd export"
 
 	elems, err := html.Convert(htmlContent, nil)
 	if err != nil {

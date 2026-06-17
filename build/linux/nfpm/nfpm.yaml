@@ -3,7 +3,7 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "fast-md"
+name: "fastmd"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
@@ -17,12 +17,12 @@ license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/fast-md"
-    dst: "/usr/local/bin/fast-md"
+  - src: "./bin/fastmd"
+    dst: "/usr/local/bin/fastmd"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/fast-md.png"
-  - src: "./build/linux/fast-md.desktop"
-    dst: "/usr/share/applications/fast-md.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/fastmd.png"
+  - src: "./build/linux/fastmd.desktop"
+    dst: "/usr/share/applications/fastmd.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:

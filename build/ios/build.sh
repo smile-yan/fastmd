@@ -2,7 +2,7 @@
 set -e
 
 # Build configuration
-APP_NAME="fast-md"
+APP_NAME="fastmd"
 BUNDLE_ID="com.fastmd.app"
 VERSION="0.1.0"
 BUILD_NUMBER="0.1.0"

@@ -2,13 +2,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_NAME="${APP_NAME:-fast-md}"
+APP_NAME="${APP_NAME:-fastmd}"
 BIN_DIR="${BIN_DIR:-bin}"
 APP_BUNDLE="$BIN_DIR/$APP_NAME.app"
 DMG_NAME="${DMG_NAME:-$APP_NAME.dmg}"
 DMG_TMP="$BIN_DIR/$APP_NAME-tmp.dmg"
 DMG_OUT="$BIN_DIR/$DMG_NAME"
-VOLUME_NAME="${VOLUME_NAME:-fast-md-build}"
+VOLUME_NAME="${VOLUME_NAME:-fastmd-build}"
 ICON_FILE="${ICON_FILE:-build/darwin/icons.icns}"
 UNIVERSAL="${UNIVERSAL:-false}"
 

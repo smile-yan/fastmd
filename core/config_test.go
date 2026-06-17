@@ -9,7 +9,7 @@ import (
 
 // withTempHome redirects os.UserHomeDir() to a fresh temp dir for the
 // duration of the test, so LoadConfig/SaveConfig don't read or write the
-// real ~/Library/Application Support/fast-md/config.json. On non-darwin
+// real ~/Library/Application Support/fastmd/config.json. On non-darwin
 // CI hosts the path doesn't include "Library", but the test still works —
 // the redirect applies uniformly and the package functions write under
 // whatever subpath they hard-code.
@@ -92,11 +92,11 @@ func TestLoadConfigAcceptsValidLanguages(t *testing.T) {
 }
 
 // TestSaveConfigCreatesParentDirectory ensures a fresh install — where
-// ~/Library/Application Support/fast-md/ doesn't yet exist — doesn't
+// ~/Library/Application Support/fastmd/ doesn't yet exist — doesn't
 // fail the very first write.
 func TestSaveConfigCreatesParentDirectory(t *testing.T) {
 	home := withTempHome(t)
-	expected := filepath.Join(home, "Library", "Application Support", "fast-md", "config.json")
+	expected := filepath.Join(home, "Library", "Application Support", "fastmd", "config.json")
 
 	if _, err := os.Stat(expected); err == nil {
 		t.Fatalf("config file already exists before write: %s", expected)

@@ -45,7 +45,7 @@ func NewEditorWindowWithFile(app *application.App, filePath string) *application
 		windowURL = "/?file=" + url.QueryEscape(filePath)
 	}
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:          "fast-md",
+		Title:          "fastmd",
 		Width:          1280,
 		Height:         800,
 		MinWidth:       600,
@@ -200,7 +200,7 @@ func Run(assets fs.FS) error {
 	}
 
 	app := application.New(application.Options{
-		Name:        "fast-md",
+		Name:        "fastmd",
 		Description: "A fast Markdown editor",
 		Services: []application.Service{
 			application.NewService(Service),
@@ -263,7 +263,7 @@ func Run(assets fs.FS) error {
 	setupDockMenu()
 
 	if err := app.Run(); err != nil {
-		log.Printf("fast-md: app.Run failed: %v", err)
+		log.Printf("fastmd: app.Run failed: %v", err)
 		return err
 	}
 	return nil

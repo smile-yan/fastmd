@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_NAME="fast-md"
+APP_NAME="fastmd"
 BUNDLE_ID="com.fastmd.app"
 APP_PATH="/Applications/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
@@ -18,7 +18,7 @@ for dir in /opt/homebrew/bin /usr/local/bin "$HOME/.local/bin"; do
   [ -L "$link" ] || continue
   target="$(readlink "$link" 2>/dev/null || true)"
   case "$target" in
-    *fast-md.app/Contents/Resources/fastmd) rm -f "$link" ;;
+    *fastmd.app/Contents/Resources/fastmd) rm -f "$link" ;;
   esac
 done
 

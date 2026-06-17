@@ -11,7 +11,7 @@
       </div>
       <div class="about-body">
         <div class="about-mark">
-          <div class="about-logo">fast-md</div>
+          <div class="about-logo">fastmd</div>
           <div class="about-tagline">{{ t('about.tagline') }}</div>
         </div>
         <dl class="about-meta">

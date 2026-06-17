@@ -56,7 +56,7 @@ func helpDocumentCacheDir() string {
 	if err != nil || cacheDir == "" {
 		cacheDir = os.TempDir()
 	}
-	return filepath.Join(cacheDir, "fast-md", "help")
+	return filepath.Join(cacheDir, "fastmd", "help")
 }
 
 func materializeHelpDocument(filename, outputDir string) (string, error) {

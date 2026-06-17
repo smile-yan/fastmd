@@ -17,10 +17,10 @@ var currentLocale = LocaleZh
 
 var menuStrings = map[Locale]menuI18n{
 	LocaleZh: {
-		appName:               "fast-md",
-		about:                 "关于 fast-md",
+		appName:               "fastmd",
+		about:                 "关于 fastmd",
 		preferences:           "偏好设置...",
-		quit:                  "退出 fast-md",
+		quit:                  "退出 fastmd",
 		help:                  "帮助",
 		file:                  "文件",
 		newFile:               "新建文件",
@@ -51,10 +51,10 @@ var menuStrings = map[Locale]menuI18n{
 		cancel:                "取消",
 	},
 	LocaleEn: {
-		appName:               "fast-md",
-		about:                 "About fast-md",
+		appName:               "fastmd",
+		about:                 "About fastmd",
 		preferences:           "Preferences...",
-		quit:                  "Quit fast-md",
+		quit:                  "Quit fastmd",
 		help:                  "Help",
 		file:                  "File",
 		newFile:               "New File",

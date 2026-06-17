@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 env:
-  APP_NAME: fast-md
+  APP_NAME: fastmd
   GO_VERSION: '1.25.x'
 
 jobs:
@@ -128,7 +128,7 @@ jobs:
           for arch in arm64 amd64; do
             bin_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}"
             # .app bundle name is fixed; the arch only goes into the DMG
-            # filename so users see "fast-md" in /Applications for both
+            # filename so users see "fastmd" in /Applications for both
             # arm64 and amd64 builds.
             app_dir="/tmp/${APP_NAME}.app"
             dist_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}-pkg"
@@ -154,7 +154,7 @@ jobs:
             cp build/darwin/Info.plist "${app_dir}/Contents/Info.plist"
             plutil -replace CFBundleShortVersionString -string "${version}"          "${app_dir}/Contents/Info.plist"
             plutil -replace CFBundleVersion           -string "${GITHUB_RUN_NUMBER}"  "${app_dir}/Contents/Info.plist"
-            plutil -insert  CFBundleDisplayName        -string "Fast MD"             "${app_dir}/Contents/Info.plist"
+            plutil -insert  CFBundleDisplayName        -string "fastmd"             "${app_dir}/Contents/Info.plist"
             plutil -insert  NSPrincipalClass           -string "NSApplication"       "${app_dir}/Contents/Info.plist"
 
             # Ad-hoc codesign so LaunchServices honours CFBundleDocumentTypes
@@ -168,7 +168,7 @@ jobs:
             ln -s /Applications "${volume_dir}/Applications"
 
             hdiutil create \
-              -volname "Fast MD" \
+              -volname "fastmd" \
               -srcfolder "${volume_dir}" \
               -ov \
               -format ULFO \
@@ -223,16 +223,16 @@ jobs:
           cd release-assets
           # Linux: ship a gzip-compressed tarball
           mkdir -p linux-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64/fast-md linux-amd64/fast-md
-          (cd linux-amd64 && GZIP=-9 tar -czf fast-md-${{ github.ref_name }}-linux-amd64.tar.gz fast-md && rm fast-md)
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64/fastmd linux-amd64/fastmd
+          (cd linux-amd64 && GZIP=-9 tar -czf fastmd-${{ github.ref_name }}-linux-amd64.tar.gz fastmd && rm fastmd)
           # Windows: ship a zip archive
           mkdir -p windows-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fast-md.exe windows-amd64/fast-md.exe
-          (cd windows-amd64 && zip -9 fast-md-${{ github.ref_name }}-windows-amd64.zip fast-md.exe && rm fast-md.exe)
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64/fastmd.exe windows-amd64/fastmd.exe
+          (cd windows-amd64 && zip -9 fastmd-${{ github.ref_name }}-windows-amd64.zip fastmd.exe && rm fastmd.exe)
           # macOS: DMGs are already compressed
           mkdir -p darwin-arm64 darwin-amd64
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/*.dmg darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.dmg
-          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/*.dmg darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.dmg
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-arm64-pkg/*.dmg darwin-arm64/fastmd-${{ github.ref_name }}-darwin-arm64.dmg
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-darwin-amd64-pkg/*.dmg darwin-amd64/fastmd-${{ github.ref_name }}-darwin-amd64.dmg
           ls -la */
 
       - name: Create draft release
@@ -241,7 +241,7 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            release-assets/linux-amd64/fast-md-${{ github.ref_name }}-linux-amd64.tar.gz
-            release-assets/windows-amd64/fast-md-${{ github.ref_name }}-windows-amd64.zip
-            release-assets/darwin-arm64/fast-md-${{ github.ref_name }}-darwin-arm64.dmg
-            release-assets/darwin-amd64/fast-md-${{ github.ref_name }}-darwin-amd64.dmg
+            release-assets/linux-amd64/fastmd-${{ github.ref_name }}-linux-amd64.tar.gz
+            release-assets/windows-amd64/fastmd-${{ github.ref_name }}-windows-amd64.zip
+            release-assets/darwin-arm64/fastmd-${{ github.ref_name }}-darwin-arm64.dmg
+            release-assets/darwin-amd64/fastmd-${{ github.ref_name }}-darwin-amd64.dmg

@@ -144,5 +144,5 @@ func normalizeAndDedupe(paths []string) []string {
 // list, alongside the config file.
 func recentFilesPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, "Library", "Application Support", "fast-md", "recent.json")
+	return filepath.Join(home, "Library", "Application Support", "fastmd", "recent.json")
 }
