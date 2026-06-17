@@ -127,7 +127,10 @@ jobs:
 
           for arch in arm64 amd64; do
             bin_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}"
-            app_dir="/tmp/${APP_NAME}-${arch}.app"
+            # .app bundle name is fixed; the arch only goes into the DMG
+            # filename so users see "fast-md" in /Applications for both
+            # arm64 and amd64 builds.
+            app_dir="/tmp/${APP_NAME}.app"
             dist_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}-pkg"
             volume_dir="/tmp/${APP_NAME}-${arch}-dmg"
 
@@ -138,56 +141,28 @@ jobs:
             chmod +x "${app_dir}/Contents/MacOS/${APP_NAME}"
 
             if [ -f "build/darwin/icons.icns" ]; then
-              cp "build/darwin/icons.icns" "${app_dir}/Contents/Resources/app.icns"
+              # Filename must match the CFBundleIconFile in build/darwin/Info.plist.
+              cp "build/darwin/icons.icns" "${app_dir}/Contents/Resources/icons.icns"
             fi
 
-            printf '%s\n' \
-              '<?xml version="1.0" encoding="UTF-8"?>' \
-              '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
-              '<plist version="1.0">' \
-              '<dict>' \
-              "    <key>CFBundleExecutable</key>" \
-              "    <string>${APP_NAME}</string>" \
-              "    <key>CFBundleIdentifier</key>" \
-              "    <string>com.fastmd.${APP_NAME}</string>" \
-              "    <key>CFBundleName</key>" \
-              "    <string>${APP_NAME}</string>" \
-              "    <key>CFBundleDisplayName</key>" \
-              "    <string>Fast MD</string>" \
-              "    <key>CFBundleIconFile</key>" \
-              "    <string>app.icns</string>" \
-              "    <key>CFBundlePackageType</key>" \
-              "    <string>APPL</string>" \
-              "    <key>CFBundleShortVersionString</key>" \
-              "    <string>${version}</string>" \
-              "    <key>CFBundleVersion</key>" \
-              "    <string>${GITHUB_RUN_NUMBER}</string>" \
-              "    <key>LSMinimumSystemVersion</key>" \
-              "    <string>10.15</string>" \
-              "    <key>NSPrincipalClass</key>" \
-              "    <string>NSApplication</string>" \
-              "    <key>CFBundleDocumentTypes</key>" \
-              "    <array>" \
-              "        <dict>" \
-              "            <key>CFBundleTypeName</key>" \
-              "            <string>Markdown File</string>" \
-              "            <key>CFBundleTypeRole</key>" \
-              "            <string>Editor</string>" \
-              "            <key>LSHandlerRank</key>" \
-              "            <string>Owner</string>" \
-              "            <key>LSItemContentTypes</key>" \
-              "            <array>" \
-              "                <string>net.daringfireball.markdown</string>" \
-              "            </array>" \
-              "            <key>CFBundleTypeExtensions</key>" \
-              "            <array>" \
-              "                <string>md</string>" \
-              "                <string>markdown</string>" \
-              "            </array>" \
-              "        </dict>" \
-              "    </array>" \
-              '</dict>' \
-              '</plist>' > "${app_dir}/Contents/Info.plist"
+
+            # Use build/darwin/Info.plist as the source of truth (CFBundleIdentifier,
+            # CFBundleDocumentTypes, NSHighResolutionCapable, min OS, etc. are all
+            # maintained there — see build/config.yml). Patch the per-build fields
+            # with plutil so the release DMG matches the local dev build instead of
+            # silently drifting into a different bundle ID, icon path, or min OS.
+            cp build/darwin/Info.plist "${app_dir}/Contents/Info.plist"
+            plutil -replace CFBundleShortVersionString -string "${version}"          "${app_dir}/Contents/Info.plist"
+            plutil -replace CFBundleVersion           -string "${GITHUB_RUN_NUMBER}"  "${app_dir}/Contents/Info.plist"
+            plutil -insert  CFBundleDisplayName        -string "Fast MD"             "${app_dir}/Contents/Info.plist"
+            plutil -insert  NSPrincipalClass           -string "NSApplication"       "${app_dir}/Contents/Info.plist"
+
+            # Ad-hoc codesign so LaunchServices honours CFBundleDocumentTypes
+            # (without a signature, macOS won't reliably register the .md/.markdown
+            # file association as the default handler) and Gatekeeper allows the
+            # first launch without a manual right-click → Open. Swap to a
+            # Developer ID + notarization for real distribution.
+            codesign --force --deep --sign - "${app_dir}"
 
             cp -R "${app_dir}" "${volume_dir}/"
             ln -s /Applications "${volume_dir}/Applications"
