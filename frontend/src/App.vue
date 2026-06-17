@@ -270,7 +270,19 @@ function showExportToast(path: string, name: string) {
   })
 }
 
+// Save toasts are throttled: Cmd+S fires every few keystrokes while
+// editing, and a toast on every save is more noise than signal. The
+// 3s window is short enough that the user still gets confirmation
+// when they switch to a different action (Save As, export, etc.),
+// and long enough to absorb a burst of rapid Cmd+S presses. The
+// existing toast (if any) keeps its own auto-dismiss schedule.
+const SAVE_TOAST_THROTTLE_MS = 3000
+let lastSaveToastAt = 0
+
 function showSaveToast(path: string) {
+  if (Date.now() - lastSaveToastAt < SAVE_TOAST_THROTTLE_MS) return
+  lastSaveToastAt = Date.now()
+
   // Derive the basename from the full path; keep the extension so the
   // user sees exactly which file was written. For an untitled (never-
   // saved) buffer there's no path, but the save call sites only invoke
