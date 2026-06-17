@@ -20,22 +20,30 @@ path:
 fast-md ~/notes/hello.md
 ```
 
-On first install, macOS does not put `.app` bundles on `$PATH`. To get
-the short `fastmd hello.md` workflow, symlink the bundle's binary into a
-directory on your `$PATH`:
+For the short `fastmd <file>.md` workflow, run the install script once
+after dragging `fast-md.app` to `/Applications`:
 
 ```bash
-ln -sf /Applications/fast-md.app/Contents/MacOS/fast-md /usr/local/bin/fastmd
-# Apple Silicon: /opt/homebrew/bin/fastmd
+bash scripts/install-cli.sh
 ```
 
-After that, any `.md` or `.markdown` argument is opened in a fresh window.
-A leading `~/` is expanded via `$HOME`; relative paths are resolved
-against the current working directory. Flags and unrelated arguments are
-ignored, so a stray `-psn_0` from Launch Services never confuses the
-parser.
+It symlinks a tiny wrapper at `fast-md.app/Contents/Resources/fastmd`
+into the first writable `$PATH` directory it finds
+(`/opt/homebrew/bin` → `/usr/local/bin` → `~/.local/bin`) as `fastmd`.
+The wrapper runs `open -a fast-md "$@"`, which routes the file through
+macOS LaunchServices — if fast-md is already running, the file opens in
+a new window of the running instance; otherwise fast-md cold-launches.
+The script is idempotent and never needs `sudo` (it falls back to
+`~/.local/bin` if neither Homebrew prefix is writable).
 
-If you don't want a symlink, the built-in macOS opener works too:
+After install, any `.md` or `.markdown` argument is opened in a fresh
+window. A leading `~/` is expanded via `$HOME`; relative paths are
+resolved against the current working directory. Flags and unrelated
+arguments are ignored, so a stray `-psn_0` from Launch Services never
+confuses the parser.
+
+If you don't want to install the wrapper, the built-in macOS opener
+works too:
 
 ```bash
 open -a fast-md ~/notes/hello.md

@@ -220,10 +220,14 @@ func Run(assets fs.FS) error {
 	cfg := LoadConfig()
 	SetLocale(cfg.Language)
 
-	// If the user passed a file on the command line (e.g. `fastmd hello.md`
-	// via a symlinked binary in $PATH), open it in a fresh window
-	// immediately. The directory is trusted up-front so the frontend's
-	// initial ReadFile call succeeds without prompting.
+	// If the user invoked the embedded binary directly (bypassing the
+	// Contents/Resources/fastmd wrapper), honour the .md arg from
+	// os.Args. The wrapper at Contents/Resources/fastmd is the
+	// canonical entry point — it routes through `open -a` so
+	// kAEOpenDocuments hits the ApplicationOpenedWithFile handler
+	// below and the file opens in a (possibly existing) instance. This
+	// direct-binary branch is the fallback for users who invoke the
+	// bundle executable manually.
 	if initialFile := firstFileFromArgs(os.Args[1:]); initialFile != "" {
 		if err := Service.trustDir(filepath.Dir(initialFile)); err != nil {
 			log.Printf("trustDir(%s) failed: %v", filepath.Dir(initialFile), err)

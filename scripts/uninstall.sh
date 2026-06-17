@@ -9,6 +9,19 @@ LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchS
 # Kill running instance
 pkill -x "$APP_NAME" 2>/dev/null || true
 
+# Remove the `fastmd` CLI symlink from any PATH dir the install script
+# could have written to. Match on the symlink target so we never delete
+# a file that just happens to be named "fastmd" but belongs to something
+# else. Use [ -L ] (not [ -e ]) so dangling links are still cleaned up.
+for dir in /opt/homebrew/bin /usr/local/bin "$HOME/.local/bin"; do
+  link="$dir/fastmd"
+  [ -L "$link" ] || continue
+  target="$(readlink "$link" 2>/dev/null || true)"
+  case "$target" in
+    *fast-md.app/Contents/Resources/fastmd) rm -f "$link" ;;
+  esac
+done
+
 # Unregister ALL registered paths for this app (including bin/ and DMG volumes)
 "$LSREGISTER" -dump 2>/dev/null | grep "${APP_NAME}.app" | awk -F'[()]' '{print $1}' | sed 's/^path:[[:space:]]*//' | sed 's/[[:space:]]*$//' | while read -r p; do
   [ -n "$p" ] && "$LSREGISTER" -u "$p" 2>/dev/null || true
