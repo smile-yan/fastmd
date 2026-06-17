@@ -1,6 +1,6 @@
-# fast-md
+# fastmd
 
-fast-md is a lightweight Markdown editor built with Wails 3, Go, Vue, TypeScript, and Milkdown.
+fastmd is a lightweight Markdown editor built with Wails 3, Go, Vue, TypeScript, and Milkdown.
 
 ## Features
 
@@ -17,22 +17,22 @@ Open a file from the terminal by pointing the binary at a `.md`/`.markdown`
 path:
 
 ```bash
-fast-md ~/notes/hello.md
+fastmd ~/notes/hello.md
 ```
 
 For the short `fastmd <file>.md` workflow, run the install script once
-after dragging `fast-md.app` to `/Applications`:
+after dragging `fastmd.app` to `/Applications`:
 
 ```bash
 bash scripts/install-cli.sh
 ```
 
-It symlinks a tiny wrapper at `fast-md.app/Contents/Resources/fastmd`
+It symlinks a tiny wrapper at `fastmd.app/Contents/Resources/fastmd`
 into the first writable `$PATH` directory it finds
 (`/opt/homebrew/bin` → `/usr/local/bin` → `~/.local/bin`) as `fastmd`.
-The wrapper runs `open -a fast-md "$@"`, which routes the file through
-macOS LaunchServices — if fast-md is already running, the file opens in
-a new window of the running instance; otherwise fast-md cold-launches.
+The wrapper runs `open -a fastmd "$@"`, which routes the file through
+macOS LaunchServices — if fastmd is already running, the file opens in
+a new window of the running instance; otherwise fastmd cold-launches.
 The script is idempotent and never needs `sudo` (it falls back to
 `~/.local/bin` if neither Homebrew prefix is writable).
 
@@ -46,7 +46,7 @@ If you don't want to install the wrapper, the built-in macOS opener
 works too:
 
 ```bash
-open -a fast-md ~/notes/hello.md
+open -a fastmd ~/notes/hello.md
 ```
 
 ## Project Structure
@@ -81,8 +81,8 @@ npm run build
 Run Go checks from the repository root:
 
 ```bash
-GOCACHE=/private/tmp/fast-md-go-cache go test ./...
-GOCACHE=/private/tmp/fast-md-go-cache go build -o /private/tmp/fast-md-window-flow-test .
+GOCACHE=/private/tmp/fastmd-go-cache go test ./...
+GOCACHE=/private/tmp/fastmd-go-cache go build -o /private/tmp/fastmd-window-flow-test .
 ```
 
 Run `npm run build` before Go tests or builds when `frontend/dist` has changed, because Go embeds that directory.

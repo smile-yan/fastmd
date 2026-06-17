@@ -67,7 +67,7 @@ onMounted(async () => {
   }
 })
 
-const repoURL = 'https://github.com/smile-yan/fast-md'
+const repoURL = 'https://github.com/smile-yan/fastmd'
 
 const versionLabel = computed(() => info.value?.version || 'dev')
 
