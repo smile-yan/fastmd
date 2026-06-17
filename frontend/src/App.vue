@@ -44,6 +44,7 @@
       @content-theme-change="applyContentTheme"
     />
     <About v-if="showAbout" @close="showAbout = false" />
+    <Toast />
   </div>
 </template>
 
@@ -55,15 +56,18 @@ import Sidebar from './components/Sidebar.vue'
 import StatusBar from './components/StatusBar.vue'
 import Settings from './components/Settings.vue'
 import About from './components/About.vue'
+import Toast from './components/Toast.vue'
 import { useFile, setContent } from './composables/useFile'
 import { useTheme } from './composables/useTheme'
 import { useContentTheme } from './composables/useContentTheme'
 import { useLocale } from './composables/useLocale'
+import { useToast } from './composables/useToast'
 import { buildMarkdownExportHtml } from './exportHtml'
-import { CancelQuit, CloseWindow, ConfirmQuitWindow, ShowSaveDialog, ShowCloseSheet, ExportPDF } from '../bindings/changeme/core/appservice'
+import { CancelQuit, CloseWindow, ConfirmQuitWindow, ShowSaveDialog, ShowCloseSheet, ExportPDF, ExportHTML, RevealInFinder } from '../bindings/changeme/core/appservice'
 
 const { filePath, content, isDirty, saveStatus, saveError, newFile, openFile, saveFile, saveAs, saveToPath, resetFile } = useFile()
 const { t } = useLocale()
+const { show: showToast } = useToast()
 const titlebarTitle = computed(() =>
   filePath.value ? filePath.value.split('/').pop()! : t('menu.new')
 )
@@ -218,38 +222,58 @@ function handleThemeChange(theme: string) {
 async function handleExportHTML() {
   commitSourceModeEdits()
   await nextTick()
+  const baseTitle = filePath.value?.split('/').pop()?.replace(/\.md$/, '') ?? t('untitled')
   const proseMirror = document.querySelector('.milkdown .ProseMirror')
   const html = buildMarkdownExportHtml({
     title: filePath.value || t('untitled'),
     bodyHtml: proseMirror?.innerHTML ?? '',
   })
-  const blob = new Blob([html], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = (filePath.value?.split('/').pop()?.replace(/\.md$/, '') ?? 'export') + '.html'
-  a.click()
-  URL.revokeObjectURL(url)
+  try {
+    const path = await ExportHTML(html, baseTitle)
+    showExportToast(path, baseTitle)
+  } catch (err) {
+    handleExportError(err, 'HTML')
+  }
 }
 
 async function handleExportPDF() {
   commitSourceModeEdits()
   await nextTick()
+  const baseTitle = filePath.value?.split('/').pop()?.replace(/\.md$/, '') ?? t('untitled')
   const proseMirror = document.querySelector('.milkdown .ProseMirror')
-  const title = filePath.value?.split('/').pop()?.replace(/\.md$/, '') ?? 'export'
-  const html = buildMarkdownExportHtml({ title, bodyHtml: proseMirror?.innerHTML ?? '' })
+  const html = buildMarkdownExportHtml({ title: baseTitle, bodyHtml: proseMirror?.innerHTML ?? '' })
   try {
-    await ExportPDF(html, title)
+    const path = await ExportPDF(html, baseTitle)
+    showExportToast(path, baseTitle)
   } catch (err) {
-    // ExportPDF throws on folio/webview failure AND on user cancel
-    // (Go returns fmt.Errorf("cancelled")). Skip the alert for the
-    // cancel case so the user isn't yelled at for closing a dialog.
-    const message = err instanceof Error ? err.message : String(err)
-    if (!/cancel/i.test(message)) {
-      alert(t('dialog.exportFailed'))
-    }
-    console.error('Export PDF failed:', err)
+    handleExportError(err, 'PDF')
   }
+}
+
+function showExportToast(path: string, name: string) {
+  // Show just the base name in the toast (the path can be very long);
+  // the full path goes into the title attribute as a hover tooltip.
+  const baseName = name.replace(/\.(pdf|html)$/i, '')
+  showToast({
+    message: t('dialog.exportSuccess', { name: baseName }),
+    action: {
+      label: t('dialog.revealInFinder'),
+      onClick: () => {
+        RevealInFinder(path).catch((e) => {
+          console.error('RevealInFinder failed:', e)
+        })
+      },
+    },
+  })
+}
+
+function handleExportError(err: unknown, kind: string) {
+  // Go returns fmt.Errorf("cancelled") when the user closes the save
+  // dialog. Treat that as benign — no alert, no console noise.
+  const message = err instanceof Error ? err.message : String(err)
+  if (/cancel/i.test(message)) return
+  alert(t('dialog.exportFailed'))
+  console.error(`Export ${kind} failed:`, err)
 }
 
 const cleanups: Array<() => void> = []

@@ -1,6 +1,6 @@
 # fast-md todo list
 
-Issues / followups discovered during the `fastmd` CLI install + rename work (commits `82441fe`, `94f9ca4`, `481fed2`).
+Issues / followups discovered during the `fastmd` CLI install + rename work (commits `82441fe`, `94f9ca4`, `481fed2`), and the export-HTML fix / PDF success toast (commit TBD).
 
 ## P0 — data preservation
 

@@ -93,3 +93,12 @@ func TestGetHomePath(t *testing.T) {
 		t.Errorf("expected absolute path, got %q", home)
 	}
 }
+
+func TestRevealInFinderEmptyPath(t *testing.T) {
+	// The app-level guard around revealInFinder: an empty path must
+	// produce an error before any platform shell-out is attempted.
+	svc := &AppService{}
+	if err := svc.RevealInFinder(""); err == nil {
+		t.Error("expected error for empty path, got nil")
+	}
+}

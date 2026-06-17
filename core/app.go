@@ -348,6 +348,38 @@ func (s *AppService) ExportPDF(htmlContent string, title string) (string, error)
 	return path, nil
 }
 
+// ExportHTML writes htmlContent to a user-chosen .html file. The frontend
+// used to build a Blob and trigger a download via a synthetic <a download>
+// click, but Wails' webview does not honour that flow — there is no native
+// download manager hooked up. Going through a save dialog (same path as
+// ExportPDF) keeps the UX consistent and works on every platform.
+func (s *AppService) ExportHTML(htmlContent string, title string) (string, error) {
+	path, err := s.app.Dialog.SaveFile().
+		AttachToWindow(s.focusedWindow()).
+		AddFilter("HTML Files", "*.html").
+		SetFilename(title + ".html").
+		PromptForSingleSelection()
+	if err != nil || path == "" {
+		return "", fmt.Errorf("cancelled")
+	}
+
+	if err := os.WriteFile(path, []byte(htmlContent), 0644); err != nil {
+		return "", fmt.Errorf("failed to write HTML: %w", err)
+	}
+	return path, nil
+}
+
+// RevealInFinder shows a file in the OS file manager. macOS selects the
+// file in Finder; Windows selects in Explorer; on Linux xdg-open is used
+// on the parent directory (no portable "select" semantic). Implemented
+// per-platform in reveal_{darwin,windows,other}.go.
+func (s *AppService) RevealInFinder(path string) error {
+	if path == "" {
+		return fmt.Errorf("path is empty")
+	}
+	return revealInFinder(path)
+}
+
 func exportHTMLToPDF(htmlContent string, outputPath string) error {
 	doc := document.NewDocument(document.PageSizeA4)
 	doc.Info.Title = "fastmd export"
