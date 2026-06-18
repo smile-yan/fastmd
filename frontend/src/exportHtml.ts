@@ -41,6 +41,14 @@ body {
   background: #ffffff;
 }
 
+:root {
+  --monospace: "Lucida Console", Consolas, "Courier", monospace;
+}
+
+*, ::after, ::before {
+  box-sizing: border-box;
+}
+
 .markdown-body {
   max-width: 860px;
   margin: 0 auto;
@@ -134,9 +142,13 @@ body {
   margin: 0;
 }
 
+.markdown-body li p {
+  margin: 0.5rem 0;
+}
+
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 30px;
+  padding-left: 40px;
 }
 
 .markdown-body ul:first-child,
@@ -173,11 +185,24 @@ body {
   padding-right: 0;
 }
 
+.markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body li > :first-child {
+  margin-top: 0;
+}
+
 .markdown-body table {
   width: 100%;
   padding: 0;
   border-collapse: collapse;
   word-break: initial;
+  text-align: left;
 }
 
 .markdown-body table tr {
@@ -221,6 +246,7 @@ body {
   padding: 2px 4px 0 4px;
   color: inherit;
   font-size: 0.9em;
+  font-family: var(--monospace);
 }
 
 .markdown-body code {
@@ -246,10 +272,29 @@ body {
 .markdown-body img {
   max-width: 100%;
   height: auto;
+  vertical-align: middle;
+}
+
+.markdown-body input[type="checkbox"] {
+  line-height: normal;
+  padding: 0;
+}
+
+.markdown-body .md-task-list-item {
+  position: relative;
+  list-style-type: none;
+}
+
+.markdown-body .task-list-item.md-task-list-item {
+  padding-left: 0;
 }
 
 .markdown-body .md-task-list-item > input {
-  margin-left: -1.3em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-left: -1.2em;
+  margin-top: calc(1em - 10px);
 }
 
 .markdown-body pre.md-meta-block {
@@ -283,6 +328,35 @@ body {
   color: #b4654d;
 }
 
+.markdown-body kbd {
+  margin: 0 0.1em;
+  padding: 0.1em 0.6em;
+  font-size: 0.8em;
+  color: rgb(36, 39, 41);
+  background: rgb(255, 255, 255);
+  border: 1px solid rgb(173, 179, 185);
+  border-radius: 3px;
+  box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.markdown-body mark {
+  background: rgb(255, 255, 0);
+  color: rgb(0, 0, 0);
+}
+
+.markdown-body figure {
+  overflow-x: auto;
+  margin: 1.2em 0;
+  max-width: calc(100% + 16px);
+  padding: 0;
+}
+
+.markdown-body thead {
+  display: table-header-group;
+}
+
 @media print {
   html {
     font-size: 13px;
@@ -291,6 +365,21 @@ body {
   pre {
     page-break-inside: avoid;
     word-wrap: break-word;
+  }
+
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    break-inside: avoid;
+  }
+
+  .markdown-body thead,
+  .markdown-body tr {
+    break-inside: avoid;
+    break-after: auto;
   }
 }
 `.trim()
