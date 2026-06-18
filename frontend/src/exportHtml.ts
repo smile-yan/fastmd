@@ -201,8 +201,10 @@ body {
   width: 100%;
   padding: 0;
   border-collapse: collapse;
+  border-spacing: 0;
   word-break: initial;
   text-align: left;
+  overflow: auto;
 }
 
 .markdown-body table tr {
@@ -211,7 +213,23 @@ body {
   padding: 0;
 }
 
-.markdown-body table tr:nth-child(2n), .markdown-body thead {
+/* Standard HTML tables: <thead> gets the grey background */
+.markdown-body thead {
+  background-color: #f8f8f8;
+}
+/* Standard: zebra on even rows inside <tbody> (when preceded by <thead>) */
+.markdown-body thead ~ tbody tr:nth-child(even) {
+  background-color: #f8f8f8;
+}
+
+/* Milkdown tables: header row identified by data-is-header attribute */
+.markdown-body tr[data-is-header] {
+  background-color: #f8f8f8;
+}
+/* Milkdown: when <tbody> is the first child of <table> (no <thead>),
+   use odd-row zebra so the header (row 1) stays grey and data alternates
+   starting with white. */
+.markdown-body table > tbody:first-child tr:nth-child(odd) {
   background-color: #f8f8f8;
 }
 
