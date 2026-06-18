@@ -31,12 +31,6 @@ var menuStrings = map[Locale]menuI18n{
 		exportHtml:            "导出 HTML...",
 		exportPdf:             "导出 PDF...",
 		editor:                "编辑",
-		undo:                  "撤销",
-		redo:                  "重做",
-		cut:                   "剪切",
-		copy:                  "复制",
-		paste:                 "粘贴",
-		selectAll:             "全选",
 		view:                  "视图",
 		toggleSidebar:         "切换侧边栏",
 		theme:                 "主题",
@@ -71,12 +65,6 @@ var menuStrings = map[Locale]menuI18n{
 		exportHtml:            "Export as HTML...",
 		exportPdf:             "Export as PDF...",
 		editor:                "Editor",
-		undo:                  "Undo",
-		redo:                  "Redo",
-		cut:                   "Cut",
-		copy:                  "Copy",
-		paste:                 "Paste",
-		selectAll:             "Select All",
 		view:                  "View",
 		toggleSidebar:         "Toggle Sidebar",
 		theme:                 "Theme",
@@ -113,12 +101,6 @@ type menuI18n struct {
 	exportHtml            string
 	exportPdf             string
 	editor                string
-	undo                  string
-	redo                  string
-	cut                   string
-	copy                  string
-	paste                 string
-	selectAll             string
 	view                  string
 	toggleSidebar         string
 	theme                 string
@@ -209,32 +191,14 @@ func buildMenuI18n(app *application.App) {
 	}), menuIconQuit)
 
 	editorMenu := menu.AddSubmenu(ms.editor)
-	// Localized + explicitly wired: NSMenuItem.AddRole relies on the
-	// responder chain walking back to the focused view, but Wails' webview
-	// doesn't implement undo:/cut:/copy: selectors, so AddRole clicks were
-	// no-ops on darwin (only keyboard shortcuts worked). Routing each click
-	// through EmitToFocused keeps both the localized label AND a working
-	// action.
-	editorMenu.Add(ms.undo).SetAccelerator("CmdOrCtrl+Z").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:undo")
-	})
-	editorMenu.Add(ms.redo).SetAccelerator("Shift+CmdOrCtrl+Z").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:redo")
-	})
+	editorMenu.AddRole(application.Undo)
+	editorMenu.AddRole(application.Redo)
 	editorMenu.AddSeparator()
-	editorMenu.Add(ms.cut).SetAccelerator("CmdOrCtrl+X").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:cut")
-	})
-	editorMenu.Add(ms.copy).SetAccelerator("CmdOrCtrl+C").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:copy")
-	})
-	editorMenu.Add(ms.paste).SetAccelerator("CmdOrCtrl+V").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:paste")
-	})
+	editorMenu.AddRole(application.Cut)
+	editorMenu.AddRole(application.Copy)
+	editorMenu.AddRole(application.Paste)
 	editorMenu.AddSeparator()
-	editorMenu.Add(ms.selectAll).SetAccelerator("CmdOrCtrl+A").OnClick(func(_ *application.Context) {
-		EmitToFocused(app, "menu:edit:selectAll")
-	})
+	editorMenu.AddRole(application.SelectAll)
 
 	viewMenu := menu.AddSubmenu(ms.view)
 	setMenuIcon(viewMenu.Add(ms.toggleSidebar).SetAccelerator("CmdOrCtrl+Shift+L").OnClick(func(_ *application.Context) {

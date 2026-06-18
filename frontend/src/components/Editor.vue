@@ -39,8 +39,6 @@ import { $shortcut, replaceAll } from '@milkdown/kit/utils'
 import { commandsCtx, editorViewCtx, type CmdKey } from '@milkdown/kit/core'
 import type { Ctx } from '@milkdown/kit/ctx'
 import { AllSelection, TextSelection, type Command } from '@milkdown/kit/prose/state'
-import { redo, undo } from '@milkdown/kit/prose/history'
-import { selectAll as selectAllCommand } from '@milkdown/kit/prose/commands'
 import { deleteRow, isInTable, selectedRect } from '@milkdown/kit/prose/tables'
 import { applyEditorSettingsVariables } from '../composables/useEditorSettings'
 import '@milkdown/crepe/theme/common/style.css'
@@ -353,35 +351,6 @@ function handleClick(e: MouseEvent) {
     view.focus()
   })
 }
-
-// Run a ProseMirror history command and re-focus the editor afterwards.
-// The menu wires these via Cmd+Z / Cmd+Shift+Z, but the same actions need
-// to work when invoked from the Edit menu (where the webview may have lost
-// focus) — re-focusing keeps the caret visible after the change.
-function runHistoryCommand(cmd: Command) {
-  if (!crepe) return
-  let dispatched = false
-  crepe.editor.action((ctx) => {
-    const view = ctx.get(editorViewCtx)
-    dispatched = cmd(view.state, view.dispatch)
-    view.focus()
-  })
-  return dispatched
-}
-
-function performUndo() {
-  return runHistoryCommand(undo)
-}
-
-function performRedo() {
-  return runHistoryCommand(redo)
-}
-
-function performSelectAll() {
-  return runHistoryCommand(selectAllCommand)
-}
-
-defineExpose({ undo: performUndo, redo: performRedo, selectAll: performSelectAll })
 
 watch(
   () => props.modelValue,

@@ -16,7 +16,6 @@
         </div>
         <div class="editor-scroll">
           <Editor
-            ref="editorRef"
             :key="editorKey"
             :model-value="content"
             @update:model-value="handleEditorChange"
@@ -77,7 +76,6 @@ const { applyContentTheme } = useContentTheme()
 
 const sidebarOpen = ref(false)
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
-const editorRef = ref<InstanceType<typeof Editor> | null>(null)
 const showSettings = ref(false)
 const showAbout = ref(false)
 const sourceMode = ref(false)
@@ -209,36 +207,6 @@ async function requestClose(action: 'close' | 'quit') {
 // ── Rest of app logic ──────────────────────────────────────────────────────
 function handleEditorChange(val: string) {
   setContent(val)
-}
-
-// Edit-menu actions. Undo/redo/selectAll are delegated to the Milkdown
-// editor (it owns the ProseMirror history & selection state). Cut/copy/
-// paste run via document.execCommand on the currently focused element —
-// the webview's own Cmd+X/C/V still work through the browser's default
-// behaviour, but a menu click lands on the OS chrome (not the webview)
-// and the browser's shortcut path doesn't fire, so we re-issue the
-// commands explicitly. If focus is in the source-mode textarea the same
-// calls cover it because document.execCommand acts on the active element.
-function runWebViewCommand(command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') {
-  if (sourceMode.value) {
-    // In source mode the textarea has its own browser-native undo/redo
-    // history; the editor ref's methods only work against the
-    // ProseMirror view, so dispatch through document.execCommand.
-    const el = sourceTextarea.value
-    if (!el) return
-    el.focus()
-    if (command === 'selectAll') el.select()
-    else document.execCommand(command)
-    return
-  }
-  // WYSIWYG mode: route through the editor's exposed methods so we hit
-  // the same plugins the keyboard shortcuts use.
-  if (command === 'undo') { editorRef.value?.undo?.(); return }
-  if (command === 'redo') { editorRef.value?.redo?.(); return }
-  if (command === 'selectAll') { editorRef.value?.selectAll?.(); return }
-  const view = document.querySelector<HTMLElement>('.milkdown .ProseMirror')
-  view?.focus()
-  document.execCommand(command)
 }
 
 async function handleOpenFile(path: string) {
@@ -390,12 +358,6 @@ onMounted(async () => {
   cleanups.push(Events.On('menu:exportHTML', () => handleExportHTML()))
   cleanups.push(Events.On('menu:exportPDF', () => handleExportPDF()))
   cleanups.push(Events.On('menu:setTheme', (ev) => applyContentTheme(ev.data as string)))
-  cleanups.push(Events.On('menu:edit:undo', () => runWebViewCommand('undo')))
-  cleanups.push(Events.On('menu:edit:redo', () => runWebViewCommand('redo')))
-  cleanups.push(Events.On('menu:edit:cut', () => runWebViewCommand('cut')))
-  cleanups.push(Events.On('menu:edit:copy', () => runWebViewCommand('copy')))
-  cleanups.push(Events.On('menu:edit:paste', () => runWebViewCommand('paste')))
-  cleanups.push(Events.On('menu:edit:selectAll', () => runWebViewCommand('selectAll')))
 
   cleanups.push(Events.On('common:WindowFilesDropped', (ev) => {
     const data = ev.data as unknown as { filenames: string[] }
