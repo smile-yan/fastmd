@@ -441,6 +441,20 @@ body {
     break-after: auto;
   }
 }
+
+
+@media only screen and (min-width: 1400px) {
+  .markdown-body {
+    max-width: 1024px;
+  }
+}
+
+@media only screen and (min-width: 1800px) {
+  .markdown-body {
+    max-width: 1200px;
+  }
+}
+
 `.trim()
 
 export function buildMarkdownExportHtml({ title, bodyHtml }: { title: string, bodyHtml: string }) {
