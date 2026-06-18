@@ -247,6 +247,11 @@ body {
   padding: 6px 13px;
 }
 
+.markdown-body th > p,
+.markdown-body td > p {
+  margin: 0;
+}
+
 .markdown-body table th:first-child,
 .markdown-body table td:first-child {
   margin-top: 0;
