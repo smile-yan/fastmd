@@ -12,6 +12,8 @@ fast-md is a Typora-like Markdown editor for macOS built on Wails 3 (Go) + Vue 3
 
 - **DO NOT add `Co-Authored-By: Claude <noreply@anthropic.com>` or any similar attribution to commits.** The user explicitly forbids Claude from appearing as a contributor in this repository's git history. Commit messages should only contain the user's own content.
 - **DO NOT sign commits or tags on behalf of Claude.** Use the user's configured git identity only.
+- **Use the repository's default git user and email for all commits and tags.** Do not use any other identity.
+- **When creating GitHub releases, publish as official releases by default.** Only use `--draft` flag when the user explicitly specifies they want a draft release. All other releases should be set as `latest`.
 
 ## Build / Run / Test
 
