@@ -260,9 +260,12 @@ func Run(assets fs.FS) error {
 		if path == "" {
 			return
 		}
+		// Normalize path for comparison (resolve symlinks and clean).
+		normalizedPath, _ := filepath.EvalSymlinks(path)
+		normalizedInitial, _ := filepath.EvalSymlinks(initialFileOpened)
 		// Skip if this file was already opened via command-line args to
 		// avoid the double-window issue when macOS triggers both paths.
-		if path == initialFileOpened {
+		if normalizedPath != "" && normalizedPath == normalizedInitial {
 			initialFileOpened = ""
 			return
 		}
