@@ -126,13 +126,16 @@ describe('sanitizeBodyHtml', () => {
     expect(sanitized).toContain('after')
   })
 
-  it('drops <svg> subtrees (which can carry inline script)', () => {
+  it('allows <svg> elements (needed for Milkdown bullet icons) but strips dangerous content', () => {
     const sanitized = sanitizeBodyHtml(
       '<svg onload="alert(1)"><script>alert(2)</script></svg><p>kept</p>'
     )
-    expect(sanitized).not.toContain('<svg')
+    // SVG element itself is allowed (bullet icons), but dangerous internals
+    // are stripped: <script> is dropped, onload is not in the attribute allowlist.
+    expect(sanitized).toContain('<svg')
     expect(sanitized).not.toContain('onload')
     expect(sanitized).not.toContain('alert')
+    expect(sanitized).not.toContain('<script')
     expect(sanitized).toContain('kept')
   })
 

@@ -165,6 +165,42 @@ body {
   display: inline-block;
 }
 
+/* Milkdown list-item-block — styled to match Typora's <li> rendering.
+   Milkdown uses a custom NodeView that replaces <li> with div wrappers
+   and SVG bullet icons. In the export these converge to the same visual
+   as a standard <li> with browser-default ::marker. */
+.markdown-body .milkdown-list-item-block {
+  display: block;
+  padding: 0;
+}
+
+.markdown-body .milkdown-list-item-block > .list-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.markdown-body .milkdown-list-item-block > .list-item > .children {
+  min-width: 0;
+  flex: 1;
+}
+
+.markdown-body .milkdown-list-item-block .label-wrapper {
+  height: 24px;
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 4px;
+  color: rgb(51, 51, 51);
+}
+
+.markdown-body .milkdown-list-item-block .label-wrapper svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
 .markdown-body hr {
   height: 2px;
   padding: 0;
@@ -451,13 +487,13 @@ function escapeHtml(value: string) {
 // with an allowlist and strips anything not on it. Keep the allowlist tight.
 
 const ALLOWED_TAGS = new Set([
-  'a', 'abbr', 'aside', 'b', 'blockquote', 'br', 'caption', 'cite', 'code',
-  'dd', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'em', 'figcaption',
-  'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr',
-  'i', 'img', 'ins', 'kbd', 'li', 'main', 'mark', 'nav', 'ol', 'p', 'pre',
-  'q', 's', 'samp', 'section', 'small', 'span', 'strong', 'sub', 'summary',
-  'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time', 'tr',
-  'u', 'ul', 'var',
+  'a', 'abbr', 'aside', 'b', 'blockquote', 'br', 'caption', 'circle', 'cite',
+  'clipPath', 'code', 'dd', 'defs', 'del', 'details', 'dfn', 'div', 'dl',
+  'dt', 'em', 'figcaption', 'figure', 'footer', 'g', 'h1', 'h2', 'h3', 'h4',
+  'h5', 'h6', 'header', 'hr', 'i', 'img', 'ins', 'kbd', 'li', 'main', 'mark',
+  'nav', 'ol', 'p', 'path', 'pre', 'q', 'rect', 's', 'samp', 'section',
+  'small', 'span', 'strong', 'sub', 'summary', 'sup', 'svg', 'table', 'tbody',
+  'td', 'tfoot', 'th', 'thead', 'time', 'tr', 'u', 'ul', 'var',
   // Task-list checkbox — only allowed in this constrained form. The HTML
   // spec would normally require an enclosing <form> for an input to render;
   // browsers accept it standalone and Typora's CSS specifically targets it.
@@ -466,10 +502,13 @@ const ALLOWED_TAGS = new Set([
 
 // Tags removed together with their entire subtree. Anything in here can
 // either execute script (script, iframe, object) or smuggle it (svg, math).
+// SVG is allowed through (bullet icons in list items) but CSP script-src
+// 'none' provides defense-in-depth. Event handlers on SVG elements are
+// still stripped by the attribute allowlist.
 const DROP_WITH_SUBTREE = new Set([
   'script', 'style', 'noscript', 'iframe', 'object', 'embed', 'frame',
   'frameset', 'noframes', 'applet', 'base', 'form', 'button', 'select',
-  'textarea', 'link', 'meta', 'svg', 'math', 'video', 'audio', 'source',
+  'textarea', 'link', 'meta', 'math', 'video', 'audio', 'source',
   'track', 'picture', 'template',
 ])
 
@@ -489,6 +528,16 @@ const ALLOWED_ATTRS: Record<string, Set<string>> = {
   code: new Set(['id', 'class']),
   pre: new Set(['id', 'class']),
   input: new Set(['type', 'checked', 'disabled']),
+  // SVG elements — allowed for Milkdown list-item bullet icons. The CSP
+  // (script-src 'none') prevents SVG-based script execution, and the
+  // attribute allowlist blocks on* event handlers.
+  svg: new Set(['xmlns', 'viewBox', 'width', 'height']),
+  path: new Set(['d']),
+  circle: new Set(['cx', 'cy', 'r']),
+  g: new Set(['clip-path']),
+  clipPath: new Set(['id']),
+  rect: new Set(['width', 'height', 'x', 'y']),
+  defs: new Set([]),
   '*': new Set(['id', 'class']),
 }
 
