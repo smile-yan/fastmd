@@ -23,6 +23,24 @@ html.dark .milkdown .ProseMirror {
   }
 }
 
+/* Blockquote styles */
+.milkdown .ProseMirror blockquote {
+  position: relative;
+  margin: 0.8em 0 !important;
+  padding: 0 15px !important;
+  color: #777777 !important;
+  border-left: 4px solid #dfe2e5 !important;
+  box-sizing: border-box;
+}
+
+.milkdown .ProseMirror blockquote::before {
+  display: none !important;
+}
+
+.milkdown .ProseMirror blockquote blockquote {
+  padding-right: 0 !important;
+}
+
 /* Code block styles */
 .milkdown .ProseMirror pre,
 .milkdown .ProseMirror code,
