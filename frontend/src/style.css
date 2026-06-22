@@ -115,22 +115,14 @@ html.dark .milkdown .ProseMirror {
   background-color: #f8f8f8 !important;
 }
 
-/* Top-right hover tool bar: built-in Crepe LanguagePicker (shows the
-   current language) + CopyButton. The buttons fade in via Crepe's own
-   `opacity: 0` on the children, lifted to `1` on `.milkdown-code-block:hover`.
-
-   The preview-toggle button (also inside `.tools`) is hidden — we only want
-   language + copy. `.tools` itself is a transparent layout shell (no
-   background / border), so when the buttons are at `opacity: 0` nothing
-   leaks through. Each button carries its own chip chrome. */
+/* Code block tools: language on left, copy on right */
 .editor-container .milkdown .ProseMirror .milkdown-code-block .tools {
   position: absolute !important;
   top: 4px;
+  left: 8px;
   right: 8px;
   z-index: 10;
-  display: inline-flex !important;
-  align-items: center;
-  gap: 4px;
+  display: block !important;
   pointer-events: none;
 }
 
@@ -138,40 +130,32 @@ html.dark .milkdown .ProseMirror {
   pointer-events: auto;
 }
 
-/* Pull the language picker into the same flex flow as the copy button.
-   The dropdown itself (`.list-wrapper`) is positioned by floating-ui, not
-   CSS, so making the wrapper static is safe. */
 .editor-container .milkdown .ProseMirror .milkdown-code-block .language-picker {
-  position: static !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
   padding: 0 !important;
   width: auto !important;
   margin: 0 !important;
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
 }
 
 .editor-container .milkdown .ProseMirror .milkdown-code-block .tools-button-group {
-  display: inline-flex;
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  display: inline-flex !important;
   align-items: center;
-  gap: 0 !important;
+  gap: 4px !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Hide the preview-toggle button — we only want language + copy. */
-.editor-container .milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
-  display: none !important;
-}
-
-/* Uniform chrome on both clickable buttons — same height, padding, font,
-   color, and rounded chip background. No divider between them.
-
-   `.copy-button` is a real `<button>`, so it ships with browser UA defaults
-   (system `buttonface` background, `2px outset` border, etc.). We reset
-   those explicitly with `!important` and `appearance: none` so its chrome
-   is byte-identical to the `<div>`-based `.language-button`. */
+/* Uniform chrome on all buttons */
 .editor-container .milkdown .ProseMirror .milkdown-code-block .language-button,
-.editor-container .milkdown .ProseMirror .milkdown-code-block .copy-button {
+.editor-container .milkdown .ProseMirror .milkdown-code-block .copy-button,
+.editor-container .milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -193,10 +177,6 @@ html.dark .milkdown .ProseMirror {
   -webkit-appearance: none !important;
   appearance: none !important;
   text-align: center;
-}
-
-.editor-container .milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
-  display: none !important;
 }
 
 html.dark .milkdown .ProseMirror pre,
