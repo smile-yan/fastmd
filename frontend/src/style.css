@@ -1,1 +1,269 @@
-/* Empty - using Milkdown default styles */
+/* Code block styles */
+.milkdown .ProseMirror pre,
+.milkdown .ProseMirror code,
+.milkdown .ProseMirror tt {
+  border: 1px solid #e7eaed !important;
+  background-color: #f8f8f8 !important;
+  border-radius: 3px !important;
+  padding: 2px 4px 0 4px !important;
+  color: inherit !important;
+  font-size: 0.9em !important;
+}
+
+.milkdown .ProseMirror code {
+  background-color: #f3f4f4 !important;
+  padding: 0 2px !important;
+}
+
+.milkdown .ProseMirror pre {
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+  padding-top: 22px !important;
+  padding-bottom: 20px !important;
+  padding-left: 5px !important;
+  padding-right: 10px !important;
+  background-color: #f8f8f8 !important;
+  overflow-x: auto !important;
+}
+
+.milkdown .ProseMirror pre code {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.milkdown .ProseMirror img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.editor-container .milkdown .ProseMirror .milkdown-code-block {
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+  padding-top: 22px !important;
+  padding-bottom: 0 !important;
+  padding-left: 5px !important;
+  padding-right: 10px !important;
+  border: 1px solid #e7eaed !important;
+  border-radius: 3px !important;
+  background-color: #f8f8f8 !important;
+}
+
+/* The 25px bottom padding lives inside the CodeMirror scroller (not on the
+   outer container) so the horizontal scrollbar stays anchored to the very
+   bottom edge of the code block — otherwise increasing the outer padding
+   would push the scrollbar up and leave an empty band beneath it. */
+.milkdown .ProseMirror .milkdown-code-block .cm-content {
+  padding-bottom: 20px !important;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .cm-editor,
+.milkdown .ProseMirror .milkdown-code-block .cm-gutters,
+.milkdown .ProseMirror .milkdown-code-block .milkdown-code-block-placeholder {
+  background-color: #f8f8f8 !important;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .cm-content,
+.milkdown .ProseMirror .milkdown-code-block .milkdown-code-block-placeholder {
+  font-size: 0.9em !important;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .cm-activeLineGutter {
+  background-color: #f8f8f8 !important;
+}
+
+/* Top-right hover tool bar: built-in Crepe LanguagePicker (shows the
+   current language) + CopyButton. The buttons fade in via Crepe's own
+   `opacity: 0` on the children, lifted to `1` on `.milkdown-code-block:hover`.
+
+   The preview-toggle button (also inside `.tools`) is hidden — we only want
+   language + copy. `.tools` itself is a transparent layout shell (no
+   background / border), so when the buttons are at `opacity: 0` nothing
+   leaks through. Each button carries its own chip chrome. */
+.editor-container .milkdown .ProseMirror .milkdown-code-block .tools {
+  position: absolute !important;
+  top: 4px;
+  right: 8px;
+  z-index: 10;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.editor-container .milkdown .ProseMirror .milkdown-code-block .tools > * {
+  pointer-events: auto;
+}
+
+/* Pull the language picker into the same flex flow as the copy button.
+   The dropdown itself (`.list-wrapper`) is positioned by floating-ui, not
+   CSS, so making the wrapper static is safe. */
+.editor-container .milkdown .ProseMirror .milkdown-code-block .language-picker {
+  position: static !important;
+  padding: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.editor-container .milkdown .ProseMirror .milkdown-code-block .tools-button-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide the preview-toggle button — we only want language + copy. */
+.editor-container .milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
+  display: none !important;
+}
+
+/* Uniform chrome on both clickable buttons — same height, padding, font,
+   color, and rounded chip background. No divider between them.
+
+   `.copy-button` is a real `<button>`, so it ships with browser UA defaults
+   (system `buttonface` background, `2px outset` border, etc.). We reset
+   those explicitly with `!important` and `appearance: none` so its chrome
+   is byte-identical to the `<div>`-based `.language-button`. */
+.editor-container .milkdown .ProseMirror .milkdown-code-block .language-button,
+.editor-container .milkdown .ProseMirror .milkdown-code-block .copy-button {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px;
+  height: 24px !important;
+  padding: 0 10px !important;
+  margin: 0 !important;
+  font-family: var(--crepe-font-default);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1 !important;
+  color: var(--crepe-color-on-surface-variant);
+  background: var(--crepe-color-surface-low) !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  text-align: center;
+}
+
+.editor-container .milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
+  display: none !important;
+}
+
+html.dark .milkdown .ProseMirror pre,
+html.dark .milkdown .ProseMirror .milkdown-code-block {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .milkdown .ProseMirror code,
+html.dark .milkdown .ProseMirror tt {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-editor,
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-gutters,
+html.dark .milkdown .ProseMirror .milkdown-code-block .milkdown-code-block-placeholder,
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-activeLine,
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-activeLineGutter {
+  background-color: var(--bg-secondary) !important;
+}
+
+.milkdown .ProseMirror .md-task-list-item > input {
+  margin-left: -1.3em !important;
+}
+
+.milkdown .ProseMirror pre.md-meta-block {
+  padding: 1rem !important;
+  font-size: 85% !important;
+  line-height: 1.45 !important;
+  background-color: #f7f7f7 !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  color: #777777 !important;
+  margin-top: 0 !important;
+}
+
+.milkdown .ProseMirror .md-mathjax-midline {
+  background: #fafafa !important;
+}
+
+.milkdown .ProseMirror .md-image > .md-meta {
+  border-radius: 3px !important;
+  padding: 2px 0 0 4px !important;
+  font-size: 0.9em !important;
+  color: inherit !important;
+}
+
+.milkdown .ProseMirror .md-tag {
+  color: #a7a7a7 !important;
+  opacity: 1 !important;
+}
+
+.milkdown .ProseMirror .md-lang {
+  color: #b4654d !important;
+}
+
+/* Virtual cursor colour (prosemirror-virtual-cursor overrides the native caret) */
+.milkdown .ProseMirror.ProseMirror-focused {
+  --prosemirror-virtual-cursor-color: #3a8fe8;
+}
+.milkdown .ProseMirror .prosemirror-virtual-cursor {
+  border-left-width: 2.5px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Print / PDF export */
+@media print {
+  .sidebar, .status-bar { display: none !important; }
+  .editor-area { overflow: visible !important; }
+  .milkdown .ProseMirror { padding: 0; max-width: 100%; }
+}
+
+/* ── Code-block line-number gutter ────────────────────────────────────────
+   CodeMirror's `lineNumbers()` extension is injected via the Crepe
+   CodeMirror feature config (see Editor.vue). It always renders the
+   gutter DOM; whether the gutter is actually visible is decided by the
+   container class `.hide-line-numbers` on Editor.vue's root <div>, which
+   mirrors the user's `showLineNumbers` setting in localStorage.
+
+   Structure inside a code block:
+     .milkdown-code-block
+       .cm-editor
+         .cm-gutters              ← the gutter (background, scrollbar)
+           .cm-lineNumbers        ← the actual line-number column
+         .cm-content              ← the code
+
+   We tint the gutter slightly darker than the code-block panel so the
+   separator is readable, and use --text-muted for the number colour so
+   it never competes with the code itself. */
+.milkdown .ProseMirror .milkdown-code-block .cm-gutters {
+  background-color: #f3f3f3 !important;
+  border-right: 1px solid #e7eaed !important;
+  color: var(--text-muted) !important;
+}
+
+html.dark .milkdown .ProseMirror .milkdown-code-block .cm-gutters {
+  background-color: #1f1f1f !important;
+  border-right-color: var(--border-color) !important;
+}
+
+/* When the user opts out of line numbers, drop the gutter panel entirely
+   (background, border, and the column itself) so the code fills the
+   whole row. The .hide-line-numbers class is on the Editor.vue root. */
+.hide-line-numbers .milkdown .ProseMirror .milkdown-code-block .cm-gutters,
+.hide-line-numbers .milkdown .ProseMirror .milkdown-code-block .cm-lineNumbers {
+  display: none !important;
+}
