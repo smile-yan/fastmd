@@ -127,9 +127,10 @@ jobs:
 
           for arch in arm64 amd64; do
             bin_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}"
-            app_dir="/tmp/${APP_NAME}-${arch}.app"
+            app_name="FastMD"
+            app_dir="/tmp/${app_name}.app"
             dist_dir="dist/${APP_NAME}-${GITHUB_REF_NAME}-darwin-${arch}-pkg"
-            volume_dir="/tmp/${APP_NAME}-${arch}-dmg"
+            volume_dir="/tmp/${app_name}-${arch}-dmg"
 
             rm -rf "${app_dir}" "${dist_dir}" "${volume_dir}"
             mkdir -p "${app_dir}/Contents/MacOS" "${app_dir}/Contents/Resources" "${dist_dir}" "${volume_dir}"
@@ -149,11 +150,11 @@ jobs:
               "    <key>CFBundleExecutable</key>" \
               "    <string>${APP_NAME}</string>" \
               "    <key>CFBundleIdentifier</key>" \
-              "    <string>com.fastmd.${APP_NAME}</string>" \
+              "    <string>com.fastmd.app</string>" \
               "    <key>CFBundleName</key>" \
-              "    <string>${APP_NAME}</string>" \
+              "    <string>FastMD</string>" \
               "    <key>CFBundleDisplayName</key>" \
-              "    <string>Fast MD</string>" \
+              "    <string>FastMD</string>" \
               "    <key>CFBundleIconFile</key>" \
               "    <string>app.icns</string>" \
               "    <key>CFBundlePackageType</key>" \
@@ -173,7 +174,7 @@ jobs:
             ln -s /Applications "${volume_dir}/Applications"
 
             hdiutil create \
-              -volname "Fast MD" \
+              -volname "FastMD" \
               -srcfolder "${volume_dir}" \
               -ov \
               -format ULFO \
