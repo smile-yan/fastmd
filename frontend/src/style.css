@@ -1,3 +1,9 @@
+/* Katex formula styles */
+.katex-display {
+  margin-top: 0 !important;
+  margin-bottom: 22px !important;
+}
+
 /* Responsive layout */
 .milkdown .ProseMirror {
   max-width: 860px !important;
