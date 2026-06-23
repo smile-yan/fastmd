@@ -10,6 +10,11 @@ const translations = {
     untitled: '未命名',
     edited: '已编辑',
 
+    // Common
+    common: {
+      close: '关闭',
+    },
+
     // Menu
     menu: {
       file: '文件',
@@ -127,7 +132,10 @@ const translations = {
       discardUnsavedFile: '"{name}" 有未保存的更改。是否放弃并继续？',
       restartForLanguageChange: '语言已切换为中文，需要重启应用才能生效。是否立即重启？',
       saveFailed: '保存失败，请检查文件权限或磁盘空间后重试。',
-      exportFailed: '导出 PDF 失败，请重试或检查目标位置是否可写。',
+      saveSuccess: '已保存 {name}',
+      exportFailed: '导出失败，请重试或检查目标位置是否可写。',
+      exportSuccess: '已导出 {name}',
+      revealInFinder: '在访达中显示',
       save: '保存',
       discard: '放弃',
       cancel: '取消',
@@ -144,6 +152,11 @@ const translations = {
     // App
     untitled: 'Untitled',
     edited: 'edited',
+
+    // Common
+    common: {
+      close: 'Close',
+    },
 
     // Menu
     menu: {
@@ -262,7 +275,10 @@ const translations = {
       discardUnsavedFile: '"{name}" has unsaved changes. Discard and continue?',
       restartForLanguageChange: 'Language changed to English. Restart to apply?',
       saveFailed: 'Save failed. Please check the file permissions or disk space and try again.',
-      exportFailed: 'PDF export failed. Please try again or check whether the destination is writable.',
+      saveSuccess: 'Saved {name}',
+      exportFailed: 'Export failed. Please try again or check whether the destination is writable.',
+      exportSuccess: 'Exported {name}',
+      revealInFinder: 'Reveal in Finder',
       save: 'Save',
       discard: 'Discard',
       cancel: 'Cancel',
@@ -286,13 +302,19 @@ export function setLocale(locale: Locale) {
 }
 
 export function useLocale() {
-  const t = (key: string): string => {
+  const t = (key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.')
     let value: any = translations[currentLocale.value]
     for (const k of keys) {
       value = value?.[k]
     }
-    return value ?? key
+    if (typeof value !== 'string') return key
+    if (!params) return value
+    // Minimal {name}-style substitution, applied left-to-right with no
+    // recursion (a value that itself contains "{x}" is not re-expanded).
+    return value.replace(/\{(\w+)\}/g, (match, name: string) =>
+      params[name] !== undefined ? String(params[name]) : match,
+    )
   }
 
   const locale = computed(() => currentLocale.value)

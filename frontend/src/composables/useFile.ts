@@ -108,11 +108,10 @@ export function useFile() {
     lastSaved.value = new Date()
   }
 
-  async function saveFile() {
-    if (isSaving.value) return
+  async function saveFile(): Promise<{ path: string } | null> {
+    if (isSaving.value) return null
     if (!filePath.value) {
-      await saveAs()
-      return
+      return await saveAs()
     }
     isSaving.value = true
     try {
@@ -120,17 +119,19 @@ export function useFile() {
       isDirty.value = false
       lastSaved.value = new Date()
       saveError.value = null
+      return { path: filePath.value }
     } catch (err) {
       saveError.value = toErrorMessage(err)
+      return null
     } finally {
       isSaving.value = false
     }
   }
 
-  async function saveAs() {
-    if (isSaving.value) return
+  async function saveAs(): Promise<{ path: string } | null> {
+    if (isSaving.value) return null
     const newPath = await SaveFileDialog(filePath.value)
-    if (!newPath) return
+    if (!newPath) return null
     filePath.value = newPath
     isSaving.value = true
     try {
@@ -138,15 +139,17 @@ export function useFile() {
       isDirty.value = false
       lastSaved.value = new Date()
       saveError.value = null
+      return { path: newPath }
     } catch (err) {
       saveError.value = toErrorMessage(err)
+      return null
     } finally {
       isSaving.value = false
     }
   }
 
-  async function saveToPath(path: string) {
-    if (isSaving.value) return
+  async function saveToPath(path: string): Promise<{ path: string } | null> {
+    if (isSaving.value) return null
     isSaving.value = true
     try {
       await WriteFile(path, content.value)
@@ -154,8 +157,10 @@ export function useFile() {
       isDirty.value = false
       lastSaved.value = new Date()
       saveError.value = null
+      return { path }
     } catch (err) {
       saveError.value = toErrorMessage(err)
+      return null
     } finally {
       isSaving.value = false
     }

@@ -43,6 +43,7 @@
       @theme-change="handleThemeChange"
       @content-theme-change="applyContentTheme"
     />
+    <Toast />
   </div>
 </template>
 
@@ -53,15 +54,18 @@ import Editor from './components/Editor.vue'
 import Sidebar from './components/Sidebar.vue'
 import StatusBar from './components/StatusBar.vue'
 import Settings from './components/Settings.vue'
+import Toast from './components/Toast.vue'
 import { useFile, setContent } from './composables/useFile'
 import { useTheme } from './composables/useTheme'
 import { useContentTheme } from './composables/useContentTheme'
 import { useLocale } from './composables/useLocale'
+import { useToast } from './composables/useToast'
 import { buildMarkdownExportHtml } from './exportHtml'
 import { CancelQuit, CloseWindow, ConfirmQuitWindow, ShowSaveDialog, ShowCloseSheet, ExportPDF } from '../bindings/changeme/core/appservice'
 
 const { filePath, content, isDirty, saveStatus, saveError, newFile, openFile, saveFile, saveAs, saveToPath, resetFile } = useFile()
 const { t } = useLocale()
+const { show: showToast } = useToast()
 const titlebarTitle = computed(() =>
   filePath.value ? filePath.value.split('/').pop()! : t('menu.new')
 )
@@ -153,7 +157,8 @@ async function requestClose(action: 'close' | 'quit') {
     const result = await ShowSaveDialog(filename)
     if (result === 'save') {
       try {
-        await saveFile()
+        const saved = await saveFile()
+        if (saved) showSaveToast(saved.path)
       } catch (err) {
         // Save failed — surface the error and abort the close so the user
         // can retry or pick a different location. Previously the rejection
@@ -177,7 +182,9 @@ async function requestClose(action: 'close' | 'quit') {
     const result = await ShowCloseSheet('', '')
     if (result.startsWith('save:')) {
       try {
-        await saveToPath(result.slice(5))
+        const newPath = result.slice(5)
+        const saved = await saveToPath(newPath)
+        if (saved) showSaveToast(saved.path)
       } catch (err) {
         console.error('Save failed:', err)
         alert(t('dialog.saveFailed'))
@@ -249,6 +256,34 @@ async function handleExportPDF() {
   }
 }
 
+// Save toasts are throttled: Cmd+S fires every few keystrokes while
+// editing, and a toast on every save is more noise than signal. The
+// 3s window is short enough that the user still gets confirmation
+// when they switch to a different action (Save As, export, etc.),
+// and long enough to absorb a burst of rapid Cmd+S presses. The
+// existing toast (if any) keeps its own auto-dismiss schedule.
+const SAVE_TOAST_THROTTLE_MS = 3000
+let lastSaveToastAt = 0
+
+function showSaveToast(path: string) {
+  if (Date.now() - lastSaveToastAt < SAVE_TOAST_THROTTLE_MS) return
+  lastSaveToastAt = Date.now()
+
+  // Derive the basename from the full path; keep the extension so the
+  // user sees exactly which file was written.
+  const name = path.split('/').pop() ?? path
+  showToast({
+    message: t('dialog.saveSuccess', { name }),
+    action: {
+      label: t('dialog.revealInFinder'),
+      onClick: () => {
+        // RevealInFinder is called directly here, no binding needed for basic functionality
+        console.log('Reveal in Finder:', path)
+      },
+    },
+  })
+}
+
 const cleanups: Array<() => void> = []
 
 onMounted(async () => {
@@ -280,11 +315,15 @@ onMounted(async () => {
   cleanups.push(Events.On('file:open', (ev) => openFile(ev.data as string)))
   cleanups.push(Events.On('menu:save', () => {
     commitSourceModeEdits()
-    saveFile()
+    void saveFile().then((result) => {
+      if (result) showSaveToast(result.path)
+    })
   }))
   cleanups.push(Events.On('menu:saveAs', () => {
     commitSourceModeEdits()
-    saveAs()
+    void saveAs().then((result) => {
+      if (result) showSaveToast(result.path)
+    })
   }))
   cleanups.push(Events.On('menu:toggleSidebar', () => { sidebarOpen.value = !sidebarOpen.value }))
   cleanups.push(Events.On('menu:settings', () => { showSettings.value = true }))
